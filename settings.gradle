@@ -1,1 +1,5 @@
 rootProject.name = 'study'
+
+include 'common_core'
+include 'common_web'
+include 'problem'

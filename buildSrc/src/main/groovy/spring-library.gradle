@@ -1,0 +1,8 @@
+plugins {
+	id 'spring-base'
+	id 'java-library'
+}
+
+jar {
+	enabled = true
+}

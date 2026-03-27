@@ -1,0 +1,12 @@
+spring:
+  application:
+    name: problem-service
+  profiles:
+    include:
+      - common
+      - web
+server:
+  port: 8080
+#eureka:
+#  instance:
+#    instance-id: ${spring.application.name}:${server.port:8080}

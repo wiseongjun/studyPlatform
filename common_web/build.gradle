@@ -1,0 +1,10 @@
+plugins {
+	id 'spring-library'
+}
+
+apply from: '../web_common.gradle'
+
+dependencies {
+	api project(':common_core')
+	runtimeOnly 'com.mysql:mysql-connector-j'
+}

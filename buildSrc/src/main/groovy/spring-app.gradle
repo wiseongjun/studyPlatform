@@ -1,0 +1,18 @@
+plugins {
+	id 'spring-base'
+	id 'org.springframework.boot'
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+}
+
+bootJar {
+	enabled = true
+}
+
+jar {
+	enabled = false
+}

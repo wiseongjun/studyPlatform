@@ -1,0 +1,9 @@
+plugins {
+	id 'spring-app'
+}
+
+apply from: '../web_common.gradle'
+
+dependencies {
+	implementation project(':common_web')
+}
