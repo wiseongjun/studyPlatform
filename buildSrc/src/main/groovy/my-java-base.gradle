@@ -1,52 +1,52 @@
 plugins {
-	id 'java'
-	id 'checkstyle'
-	id 'io.spring.dependency-management'
+    id 'java'
+    id 'checkstyle'
+    id 'io.spring.dependency-management'
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
 }
 
 checkstyle {
-	configFile = rootProject.file('naver-checkstyle-rules.xml')
-	configProperties = [
-		'suppressionFile': rootProject.file('naver-checkstyle-suppressions.xml').toString()
-	]
+    configFile = rootProject.file('naver-checkstyle-rules.xml')
+    configProperties = [
+            'suppressionFile': rootProject.file('naver-checkstyle-suppressions.xml').toString()
+    ]
 }
 
 checkstyleMain {
-    source = fileTree('src/main/java') // generated 폴더를 제외하고 오직 src/main/java만 검사
+    source = fileTree('src/main/java')
 }
 
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
 java {
-	toolchain {
-		languageVersion = JavaLanguageVersion.of(21)
-	}
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
 
 configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
 }
 
 dependencyManagement {
-	imports {
-		mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
-	}
+    imports {
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
 }
 
 dependencies {
     compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
-	testCompileOnly 'org.projectlombok:lombok'
-	testAnnotationProcessor 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
 }

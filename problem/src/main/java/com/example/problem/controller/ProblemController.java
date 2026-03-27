@@ -1,15 +1,16 @@
 package com.example.problem.controller;
 
-import com.example.problem.dto.TestDto;
-import com.example.problem.service.ProblemService;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+import lombok.RequiredArgsConstructor;
+
+import com.example.problem.dto.TestDto;
+import com.example.problem.service.ProblemService;
 
 @RestController
 @RequestMapping("/api/v1/problem")

@@ -1,16 +1,18 @@
 package com.example.problem.repository;
 
-import com.example.problem.dto.TestDto;
-import com.example.problem.entity.QTestEntity;
-import com.querydsl.core.types.Projections;
-import com.querydsl.jpa.impl.JPAQueryFactory;
-import jakarta.persistence.EntityManager;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import static com.example.problem.entity.QTestEntity.*;
 
 import java.util.List;
 
-import static com.example.problem.entity.QTestEntity.testEntity;
+import org.springframework.stereotype.Repository;
+
+import com.querydsl.core.types.Projections;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+
+import jakarta.persistence.EntityManager;
+import lombok.RequiredArgsConstructor;
+
+import com.example.problem.dto.TestDto;
 
 @Repository
 @RequiredArgsConstructor
