@@ -1,18 +1,11 @@
 spring:
-  data:
-    redis:
-      host: ${REDIS_HOST:127.0.0.1}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: "jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:TEST}?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999"
     username: ${DB_USER:test}
     password: ${DB_PASSWORD:test}
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  flyway:
+    baseline: false
+    target: 0
+    enabled: true
+    defaultSchema: ${DB_NAME:TEST}

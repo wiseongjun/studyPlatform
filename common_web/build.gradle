@@ -1,10 +1,15 @@
 plugins {
-	id 'spring-library'
+	id 'base-library'
+	id 'querydsl'
 }
-
-apply from: '../web_common.gradle'
 
 dependencies {
 	api project(':common_core')
-	runtimeOnly 'com.mysql:mysql-connector-j'
+
+	// Web
+	api 'org.springframework.boot:spring-boot-starter-webmvc'
+	api 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Swagger
+	api "org.springdoc:springdoc-openapi-starter-webmvc-ui:${property('springdocVersion')}"
 }

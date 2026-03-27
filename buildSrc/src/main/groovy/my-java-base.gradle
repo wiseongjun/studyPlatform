@@ -15,6 +15,10 @@ checkstyle {
 	]
 }
 
+checkstyleMain {
+    source = fileTree('src/main/java') // generated 폴더를 제외하고 오직 src/main/java만 검사
+}
+
 compileJava.options.encoding = 'UTF-8'
 compileTestJava.options.encoding = 'UTF-8'
 
@@ -37,7 +41,7 @@ dependencyManagement {
 }
 
 dependencies {
-	compileOnly 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
