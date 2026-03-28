@@ -19,6 +19,7 @@ import com.example.user.dto.internal.SaveAnswerCommand;
 import com.example.user.dto.internal.SaveAttemptCommand;
 import com.example.user.dto.res.AttemptDetailResponse;
 import com.example.user.dto.res.SolvedProblemResponse;
+import com.example.user.repository.UserCommandRepository;
 import com.example.user.repository.UserRepository;
 
 @Service
@@ -26,6 +27,7 @@ import com.example.user.repository.UserRepository;
 public class UserService {
 	private final ProblemFeignClient problemFeignClient;
 	private final UserRepository userRepository;
+	private final UserCommandRepository userCommandRepository;
 
 	public List<SolvedProblemResponse> getSolvedProblemList(Long userId) {
 		List<Long> problemIds = userRepository.getSolvedProblemIds(userId);
@@ -59,7 +61,7 @@ public class UserService {
 			request.getChapterId(),
 			request.getAnswerType()
 		);
-		Long attemptId = userRepository.saveAttempt(attemptCommand);
+		Long attemptId = userCommandRepository.saveAttempt(attemptCommand);
 
 		SaveAnswerCommand answerCommand = new SaveAnswerCommand(
 			attemptId,
@@ -67,7 +69,7 @@ public class UserService {
 			request.getUserTextAnswer()
 		);
 
-		userRepository.saveUserAnswer(answerCommand);
+		userCommandRepository.saveUserAnswer(answerCommand);
 	}
 
 	private AttemptDetailResponse toAttemptDetailResponse(AttemptWithAnswersDto attempt,

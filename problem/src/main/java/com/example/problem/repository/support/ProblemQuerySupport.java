@@ -5,8 +5,6 @@ import java.util.List;
 import com.querydsl.core.types.dsl.BooleanExpression;
 
 import com.example.problem.entity.QProblem;
-import com.example.problem.entity.QProblemAnswer;
-import com.example.problem.entity.QProblemChoice;
 import com.example.problem.entity.QProblemStatus;
 
 public final class ProblemQuerySupport {
@@ -28,19 +26,6 @@ public final class ProblemQuerySupport {
 
 	public static BooleanExpression problemIdIn(List<Long> problemIds) {
 		return (problemIds == null || problemIds.isEmpty()) ? null : QProblem.problem.id.in(problemIds);
-	}
-
-	public static BooleanExpression choiceProblemIdEq(Long problemId) {
-		return problemId != null ? QProblemChoice.problemChoice.problemId.eq(problemId) : null;
-	}
-
-	public static BooleanExpression choiceProblemIdIn(List<Long> problemIds) {
-		return (problemIds == null || problemIds.isEmpty()) ? null
-			: QProblemChoice.problemChoice.problemId.in(problemIds);
-	}
-
-	public static BooleanExpression answerProblemIdEq(Long problemId) {
-		return problemId != null ? QProblemAnswer.problemAnswer.problemId.eq(problemId) : null;
 	}
 
 	public static BooleanExpression statusLinkedToProblemId(Long problemId) {

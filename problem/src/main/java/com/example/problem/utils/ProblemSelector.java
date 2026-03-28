@@ -1,4 +1,4 @@
-package com.example.problem.domain;
+package com.example.problem.utils;
 
 import java.util.HashSet;
 import java.util.List;

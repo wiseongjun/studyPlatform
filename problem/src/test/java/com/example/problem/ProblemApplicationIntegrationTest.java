@@ -28,7 +28,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.example.api.user.client.UserFeignClient;
 import com.example.api.user.dto.SaveAttemptRequest;
 import com.example.constants.AnswerType;
-import com.example.constants.ProblemType;
 import com.example.problem.dto.req.SubmitProblemRequest;
 import com.example.problem.dto.res.ProblemResponse;
 import com.example.problem.dto.res.SubmitProblemResponse;
@@ -84,13 +83,7 @@ class ProblemApplicationIntegrationTest {
 	@Test
 	@DisplayName("POST /api/v1/problem/{id}/submit — 정답 시 CORRECT 및 비동기 saveAttempt 호출")
 	void submitProblem_correctAnswer_updatesAndCallsUserService() throws Exception {
-		SubmitProblemRequest body = new SubmitProblemRequest(
-			1L,
-			1L,
-			ProblemType.SINGLE_CHOICE,
-			List.of(1),
-			null
-		);
+		SubmitProblemRequest body = new SubmitProblemRequest(1L, List.of(1), null);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String json = objectMapper.writeValueAsString(body);
@@ -117,13 +110,7 @@ class ProblemApplicationIntegrationTest {
 	@Test
 	@DisplayName("POST /api/v1/problem/{id}/submit — 오답 시 INCORRECT")
 	void submitProblem_wrongAnswer_returnsIncorrect() throws Exception {
-		SubmitProblemRequest body = new SubmitProblemRequest(
-			1L,
-			1L,
-			ProblemType.SINGLE_CHOICE,
-			List.of(3),
-			null
-		);
+		SubmitProblemRequest body = new SubmitProblemRequest(1L, List.of(3), null);
 		HttpHeaders headers = new HttpHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String json = objectMapper.writeValueAsString(body);

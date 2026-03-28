@@ -6,16 +6,11 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 
 import com.example.user.dto.internal.AttemptWithAnswersDto;
-import com.example.user.dto.internal.SaveAnswerCommand;
-import com.example.user.dto.internal.SaveAttemptCommand;
 import com.example.user.entity.QUserProblemAnswer;
 import com.example.user.entity.QUserProblemAttempt;
-import com.example.user.entity.UserProblemAnswer;
 import com.example.user.entity.UserProblemAttempt;
 import com.example.user.repository.support.UserQuerySupport;
 
@@ -24,9 +19,6 @@ import com.example.user.repository.support.UserQuerySupport;
 public class UserRepository {
 
 	private final JPAQueryFactory queryFactory;
-
-	@PersistenceContext
-	private EntityManager entityManager;
 
 	public List<Long> getSolvedProblemIds(Long userId) {
 		QUserProblemAttempt qAttempt = QUserProblemAttempt.userProblemAttempt;
@@ -82,27 +74,5 @@ public class UserRepository {
 			userTextAnswer,
 			attempt.getAttemptedAt()
 		);
-	}
-
-	public Long saveAttempt(SaveAttemptCommand command) {
-		UserProblemAttempt attempt = new UserProblemAttempt(
-			command.getUserId(),
-			command.getProblemId(),
-			command.getChapterId(),
-			command.getAnswerType()
-		);
-		entityManager.persist(attempt);
-		entityManager.flush();
-		return attempt.getId();
-	}
-
-	public void saveUserAnswer(SaveAnswerCommand command) {
-		if (command.getUserChoices() != null && !command.getUserChoices().isEmpty()) {
-			for (Integer choice : command.getUserChoices()) {
-				entityManager.persist(new UserProblemAnswer(command.getAttemptId(), choice, null));
-			}
-		} else if (command.getUserTextAnswer() != null) {
-			entityManager.persist(new UserProblemAnswer(command.getAttemptId(), null, command.getUserTextAnswer()));
-		}
 	}
 }

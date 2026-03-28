@@ -1,7 +1,6 @@
 package com.example.problem.service;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -12,10 +11,6 @@ import com.example.api.problem.dto.ProblemSummaryResponse;
 import com.example.api.user.client.UserFeignClient;
 import com.example.api.user.dto.SaveAttemptRequest;
 import com.example.constants.AnswerType;
-import com.example.problem.domain.ProblemHelper;
-import com.example.problem.domain.ProblemMarker;
-import com.example.problem.domain.ProblemSelector;
-import com.example.problem.dto.internal.ProblemAnswerDto;
 import com.example.problem.dto.req.RandomProblemFilter;
 import com.example.problem.dto.req.SubmitProblemRequest;
 import com.example.problem.dto.res.ProblemResponse;
@@ -23,6 +18,8 @@ import com.example.problem.dto.res.SubmitProblemResponse;
 import com.example.problem.entity.Problem;
 import com.example.problem.repository.ProblemCacheRepository;
 import com.example.problem.repository.ProblemRepository;
+import com.example.problem.utils.ProblemHelper;
+import com.example.problem.utils.ProblemSelector;
 
 @Service
 @RequiredArgsConstructor
@@ -44,21 +41,21 @@ public class ProblemService {
 		Long selectedId = problemSelector.selectProblemId(problemIds, exclusionList);
 		problemCacheRepository.saveLastSkippedId(filter.getUserId(), filter.getChapterId(), selectedId);
 
-		return problemApiMapper.toProblemResponse(problemRepository.getProblemInfoById(selectedId));
+		Problem problem = problemRepository.findByIdWithChoices(selectedId);
+		return problemApiMapper.toProblemResponse(problem);
 	}
 
 	public SubmitProblemResponse submitProblem(Long problemId, SubmitProblemRequest userAnswer) {
-		ProblemAnswerDto problemAnswerDto = problemRepository.getProblemAnswer(problemId);
-		AnswerType answerType = ProblemMarker.mark(userAnswer.getSelectedChoices(), userAnswer.getTextAnswer(),
-			problemAnswerDto);
+		Problem problem = problemRepository.findByIdWithAnswers(problemId);
+
+		AnswerType answerType = problem.grade(userAnswer.getSelectedChoices(), userAnswer.getTextAnswer());
 
 		problemWriteService.updateStatus(problemId, answerType);
 
-		// 추후 정합성 처리를 위해 Kafka 로 변경 - ack, rollback 처리
 		problemAsyncService.saveAttempt(new SaveAttemptRequest(
 			userAnswer.getUserId(),
 			problemId,
-			userAnswer.getChapterId(),
+			problem.getChapterId(),
 			answerType,
 			userAnswer.getSelectedChoices(),
 			userAnswer.getTextAnswer()
@@ -67,9 +64,9 @@ public class ProblemService {
 		return new SubmitProblemResponse(
 			problemId,
 			answerType,
-			problemAnswerDto.getExplanation(),
-			problemAnswerDto.getCorrectChoices(),
-			problemAnswerDto.getCorrectTextAnswer()
+			problem.getExplanation(),
+			problem.getCorrectChoiceNumbers(),
+			problem.getCorrectTextAnswer()
 		);
 	}
 
@@ -77,34 +74,21 @@ public class ProblemService {
 		if (problemIds == null || problemIds.isEmpty()) {
 			return List.of();
 		}
-		List<Problem> problems = problemRepository.findByIds(problemIds);
-		Map<Long, List<String>> choicesMap = problemRepository.getChoicesMap(problemIds);
+		List<Problem> problems = problemRepository.findByIdsWithChoices(problemIds);
 		return problems.stream()
-			.map(problem -> problemApiMapper.toSummaryResponse(
-					problem,
-					choicesMap.getOrDefault(problem.getId(), List.of())
-				)
-			)
+			.map(problemApiMapper::toSummaryResponse)
 			.toList();
 	}
 
 	public List<ProblemResponse> getProblemListByChapter(Long chapterId) {
-		List<Problem> problems = problemRepository.findByChapterId(chapterId);
-		if (problems.isEmpty()) {
-			return List.of();
-		}
-		List<Long> problemIds = problems.stream().map(Problem::getId).toList();
-		Map<Long, List<String>> choicesMap = problemRepository.getChoicesMap(problemIds);
+		List<Problem> problems = problemRepository.findByChapterIdWithChoices(chapterId);
 		return problems.stream()
-			.map(problem -> problemApiMapper.toProblemResponse(
-					problem,
-					choicesMap.getOrDefault(problem.getId(), List.of())
-				)
-			)
+			.map(problemApiMapper::toProblemResponse)
 			.toList();
 	}
 
 	public ProblemDetailResponse getProblemDetail(Long problemId) {
-		return problemApiMapper.toProblemDetailResponse(problemRepository.getProblemDetail(problemId));
+		Problem problem = problemRepository.findByIdWithAnswersAndStatus(problemId);
+		return problemApiMapper.toProblemDetailResponse(problem);
 	}
 }

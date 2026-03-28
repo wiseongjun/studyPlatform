@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,7 +15,7 @@ import org.springframework.test.context.jdbc.Sql;
 import com.example.config.QueryDslConfig;
 import com.example.exception.CustomException;
 import com.example.exception.ErrorCode;
-import com.example.problem.dto.internal.ProblemInfoDto;
+import com.example.problem.entity.Problem;
 
 @DataJpaTest
 @Import({QueryDslConfig.class, ProblemRepository.class})
@@ -51,65 +50,76 @@ class ProblemRepositoryTest {
 	}
 
 	@Test
-	@DisplayName("totalAttempts가 30 미만이면 answerCorrectRate가 null이다")
-	void getProblemInfoById_insufficientAttempts_rateIsNull() {
-		ProblemInfoDto info = problemRepository.getProblemInfoById(1L);
+	@DisplayName("findByIdWithChoices — 선택지가 choiceNumber 오름차순으로 반환된다")
+	void findByIdWithChoices_choicesOrderedByChoiceNumber() {
+		Problem problem = problemRepository.findByIdWithChoices(1L);
 
-		assertThat(info.getTotalAttempts()).isEqualTo(29);
-		assertThat(info.getCorrectAttempts()).isEqualTo(20);
+		assertThat(problem.getChoiceTexts()).containsExactly("Choice A", "Choice B", "Choice C");
 	}
 
 	@Test
-	@DisplayName("totalAttempts가 30 이상이면 시도 횟수와 정답 횟수를 반환한다")
-	void getProblemInfoById_sufficientAttempts_returnsCounts() {
-		ProblemInfoDto info = problemRepository.getProblemInfoById(2L);
+	@DisplayName("findByIdWithChoices — status도 함께 조회된다")
+	void findByIdWithChoices_includesStatus() {
+		Problem problem = problemRepository.findByIdWithChoices(1L);
 
-		assertThat(info.getTotalAttempts()).isEqualTo(30);
-		assertThat(info.getCorrectAttempts()).isEqualTo(20);
+		assertThat(problem.getProblemStatus()).isNotNull();
+		assertThat(problem.getProblemStatus().getTotalAttempts()).isEqualTo(29);
 	}
 
 	@Test
-	@DisplayName("선택지가 choiceNumber 오름차순으로 반환된다")
-	void getProblemInfoById_choicesOrderedByChoiceNumber() {
-		ProblemInfoDto info = problemRepository.getProblemInfoById(1L);
-
-		assertThat(info.getChoices()).containsExactly("Choice A", "Choice B", "Choice C");
-	}
-
-	@Test
-	@DisplayName("존재하지 않는 문제 ID 조회 시 예외가 발생한다")
-	void getProblemInfoById_notFound_throwsException() {
-		assertThatThrownBy(() -> problemRepository.getProblemInfoById(999L))
+	@DisplayName("findByIdWithChoices — 존재하지 않는 문제 ID 조회 시 예외가 발생한다")
+	void findByIdWithChoices_notFound_throwsException() {
+		assertThatThrownBy(() -> problemRepository.findByIdWithChoices(999L))
 			.isInstanceOf(CustomException.class)
 			.extracting("errorCode")
 			.isEqualTo(ErrorCode.PROBLEM_NOT_FOUND.getCode());
 	}
 
 	@Test
-	@DisplayName("findByIds — ID 목록이 비어 있으면 빈 리스트(IN 쿼리 생략)")
-	void findByIds_emptyList_returnsEmpty() {
-		assertThat(problemRepository.findByIds(List.of())).isEmpty();
+	@DisplayName("findByIdWithAnswers — 정답 데이터가 조회된다")
+	void findByIdWithAnswers_returnsAnswers() {
+		Problem problem = problemRepository.findByIdWithAnswers(1L);
+
+		assertThat(problem.getCorrectChoiceNumbers()).containsExactly(1);
 	}
 
 	@Test
-	@DisplayName("findByIds — ID 목록이 null이면 빈 리스트")
-	void findByIds_null_returnsEmpty() {
-		assertThat(problemRepository.findByIds(null)).isEmpty();
+	@DisplayName("findByIdWithAnswers — 존재하지 않는 문제 ID 조회 시 예외가 발생한다")
+	void findByIdWithAnswers_notFound_throwsException() {
+		assertThatThrownBy(() -> problemRepository.findByIdWithAnswers(999L))
+			.isInstanceOf(CustomException.class)
+			.extracting("errorCode")
+			.isEqualTo(ErrorCode.PROBLEM_NOT_FOUND.getCode());
 	}
 
 	@Test
-	@DisplayName("getChoicesMap — ID 목록이 비어 있으면 빈 맵(IN 쿼리 생략)")
-	void getChoicesMap_emptyList_returnsEmptyMap() {
-		Map<Long, List<String>> map = problemRepository.getChoicesMap(List.of());
+	@DisplayName("findByIdWithAnswersAndStatus — 정답과 status가 모두 조회된다")
+	void findByIdWithAnswersAndStatus_returnsBoth() {
+		Problem problem = problemRepository.findByIdWithAnswersAndStatus(2L);
 
-		assertThat(map).isEmpty();
+		assertThat(problem.getCorrectChoiceNumbers()).containsExactlyInAnyOrder(1, 2);
+		assertThat(problem.getProblemStatus()).isNotNull();
+		assertThat(problem.getProblemStatus().getTotalAttempts()).isEqualTo(30);
 	}
 
 	@Test
-	@DisplayName("getChoicesMap — ID 목록이 null이면 빈 맵")
-	void getChoicesMap_null_returnsEmptyMap() {
-		Map<Long, List<String>> map = problemRepository.getChoicesMap(null);
+	@DisplayName("findByIdsWithChoices — ID 목록이 비어 있으면 빈 리스트")
+	void findByIdsWithChoices_emptyList_returnsEmpty() {
+		assertThat(problemRepository.findByIdsWithChoices(List.of())).isEmpty();
+	}
 
-		assertThat(map).isEmpty();
+	@Test
+	@DisplayName("findByIdsWithChoices — ID 목록이 null이면 빈 리스트")
+	void findByIdsWithChoices_null_returnsEmpty() {
+		assertThat(problemRepository.findByIdsWithChoices(null)).isEmpty();
+	}
+
+	@Test
+	@DisplayName("findByChapterIdWithChoices — 삭제되지 않은 문제만 반환된다")
+	void findByChapterIdWithChoices_returnsNonDeletedWithChoices() {
+		List<Problem> problems = problemRepository.findByChapterIdWithChoices(1L);
+
+		assertThat(problems).hasSize(2);
+		assertThat(problems).extracting(Problem::getId).containsExactlyInAnyOrder(1L, 2L);
 	}
 }
