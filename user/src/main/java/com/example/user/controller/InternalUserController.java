@@ -3,6 +3,7 @@ package com.example.user.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import com.example.api.user.dto.SaveAttemptRequest;
 import com.example.user.service.UserService;
 
 @Hidden
+@Validated
 @RestController
 @RequestMapping("/internal/v1/user")
 @RequiredArgsConstructor
@@ -29,8 +31,8 @@ public class InternalUserController {
 
 	@GetMapping("/{userId}/problem/solved/problemIds")
 	public ResponseEntity<List<Long>> getSolvedProblemIds(
-		@PathVariable Long userId,
-		@RequestParam @NotNull Long chapterId
+		@PathVariable("userId") Long userId,
+		@RequestParam("chapterId") @NotNull Long chapterId
 	) {
 		return ResponseEntity.ok(userService.getSolvedProblemIds(userId, chapterId));
 	}

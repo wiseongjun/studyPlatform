@@ -14,8 +14,8 @@ import com.example.api.problem.dto.ProblemSummaryResponse;
 public interface ProblemFeignClient {
 
 	@GetMapping("/internal/v1/problem/list")
-	List<ProblemSummaryResponse> getProblemsIncludingDeleted(@RequestParam List<Long> problemIds);
+	List<ProblemSummaryResponse> getProblemsIncludingDeleted(@RequestParam("problemIds") List<Long> problemIds);
 
 	@GetMapping("/internal/v1/problem/{problemId}/detail")
-	ProblemDetailResponse getProblemDetail(@PathVariable Long problemId);
+	ProblemDetailResponse getProblemDetail(@PathVariable("problemId") Long problemId);
 }

@@ -2,10 +2,10 @@ package com.example.config;
 
 import java.time.Duration;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachingConfigurer;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.cache.interceptor.CacheErrorHandler;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.cache.RedisCacheConfiguration;
@@ -21,13 +21,12 @@ import io.lettuce.core.resource.DefaultClientResources;
 
 @Configuration
 @EnableCaching
-public class RedisConfig {
-	private static final Logger LOGGER = LoggerFactory.getLogger(RedisConfig.class);
+public class RedisConfig implements CachingConfigurer {
 
-	//	@Override
-	//	public CacheErrorHandler errorHandler() { 처리 필요
-	//		return new CustomCacheErrorHandler(redisConnectionFactory(clientResources()));
-	//	}
+	@Override
+	public CacheErrorHandler errorHandler() {
+		return new RedisCacheErrorHandler();
+	}
 
 	@Bean(destroyMethod = "shutdown")  // 리소스 해제를 위한 destroyMethod 설정
 	public ClientResources clientResources() {

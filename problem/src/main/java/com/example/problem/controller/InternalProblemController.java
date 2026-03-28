@@ -26,7 +26,7 @@ public class InternalProblemController {
 
 	@GetMapping("/list")
 	public ResponseEntity<List<ProblemSummaryResponse>> getProblemsIncludingDeleted(
-		@RequestParam List<Long> problemIds
+		@RequestParam("problemIds") List<Long> problemIds
 	) {
 		return ResponseEntity.ok(problemService.getProblemsIncludingDeleted(problemIds));
 	}

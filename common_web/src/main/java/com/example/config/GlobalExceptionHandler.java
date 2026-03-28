@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -23,8 +24,6 @@ import jakarta.validation.ConstraintViolationException;
 
 import com.example.exception.CustomException;
 import com.example.exception.ErrorCode;
-import com.example.exception.ServerException;
-import com.example.exception.UserException;
 import com.example.response.ExceptionResponse;
 
 @RestControllerAdvice
@@ -32,52 +31,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 	static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-	/**
-	 * Entity의 Validation Exception 처리를 위한 핸들러
-	 */
-	@ExceptionHandler(ConstraintViolationException.class)
-	public ResponseEntity<ExceptionResponse> exception(ConstraintViolationException exception) {
-		LOGGER.error(" === [Validation Exception Log] " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(ErrorCode.INVALID_INPUT),
-			HttpStatus.BAD_REQUEST
-		);
+	private static HttpStatus resolveHttpStatus(CustomException exception) {
+		return ErrorCode.findByCode(exception.getErrorCode())
+			.map(code -> toSpringHttpStatus(code.getHttpStatus()))
+			.orElse(HttpStatus.BAD_REQUEST);
 	}
 
-	/**
-	 * User Exception 처리를 위한 핸들러 (CustomException보다 위에 선언)
-	 */
-	@ExceptionHandler(UserException.class)
-	public ResponseEntity<ExceptionResponse> exception(UserException exception) {
-		LOGGER.error(" === [UserException Log] " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(exception),
-			HttpStatus.UNAUTHORIZED
-		);
-	}
-
-	/**
-	 * Server Exception 처리를 위한 핸들러 (CustomException보다 위에 선언)
-	 */
-	@ExceptionHandler(ServerException.class)
-	public ResponseEntity<ExceptionResponse> exception(ServerException exception) {
-		LOGGER.error(" === [ServerException Log] " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(exception),
-			HttpStatus.INTERNAL_SERVER_ERROR
-		);
-	}
-
-	/**
-	 * Custom Exception 처리를 위한 핸들러
-	 */
-	@ExceptionHandler(CustomException.class)
-	public ResponseEntity<ExceptionResponse> exception(CustomException exception) {
-		LOGGER.error(" === [CustomException Log] " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(exception),
-			HttpStatus.BAD_REQUEST
-		);
+	private static HttpStatus toSpringHttpStatus(int statusCode) {
+		HttpStatus resolved = HttpStatus.resolve(statusCode);
+		return resolved != null ? resolved : HttpStatus.BAD_REQUEST;
 	}
 
 	/**
@@ -93,15 +55,37 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	// }
 
 	/**
+	 * Entity의 Validation Exception 처리를 위한 핸들러
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ExceptionResponse> exception(ConstraintViolationException exception) {
+		LOGGER.warn("ConstraintViolation: {}", exception.getMessage());
+		HttpStatus status = toSpringHttpStatus(ErrorCode.INVALID_INPUT.getHttpStatus());
+		return new ResponseEntity<>(new ExceptionResponse(ErrorCode.INVALID_INPUT), status);
+	}
+
+	/**
+	 * Custom Exception 처리를 위한 핸들러
+	 */
+	@ExceptionHandler(CustomException.class)
+	public ResponseEntity<ExceptionResponse> exception(CustomException exception) {
+		HttpStatus status = resolveHttpStatus(exception);
+		if (status.is4xxClientError()) {
+			LOGGER.warn("BusinessException [{}]: {}", status.value(), exception.getMessage());
+		} else {
+			LOGGER.error("BusinessException [{}]: {}", status.value(), exception.getMessage(), exception);
+		}
+		return new ResponseEntity<>(new ExceptionResponse(exception), status);
+	}
+
+	/**
 	 * 자바 관련 모든 Exception 처리를 위한 핸들러
 	 */
 	@ExceptionHandler(Exception.class)
 	public ResponseEntity<ExceptionResponse> exception(Exception exception) {
 		LOGGER.error(" === [All Exception Log] " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(ErrorCode.SERVER_ERROR),
-			HttpStatus.INTERNAL_SERVER_ERROR
-		);
+		HttpStatus status = toSpringHttpStatus(ErrorCode.SERVER_ERROR.getHttpStatus());
+		return new ResponseEntity<>(new ExceptionResponse(ErrorCode.SERVER_ERROR), status);
 	}
 
 	/**
@@ -110,12 +94,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity<Object> handleExceptionInternal(Exception exception, Object body,
 		HttpHeaders headers, HttpStatusCode statusCode, WebRequest request) {
-		LOGGER.error(" === [WebRequest Exception Log] || " + request + " || " + exception.getMessage(), exception);
-		return new ResponseEntity<>(
-			new ExceptionResponse(ErrorCode.SERVER_ERROR),
-			headers,
-			statusCode
-		);
+		if (statusCode instanceof HttpStatus httpStatus && httpStatus.is4xxClientError()) {
+			LOGGER.warn("Web request error [{}]: {}", statusCode.value(), exception.getMessage());
+		} else {
+			LOGGER.error("Web request error [{}]: {}", statusCode.value(), exception.getMessage(), exception);
+		}
+		return super.handleExceptionInternal(exception, body, headers, statusCode, request);
 	}
 
 	/**
@@ -124,7 +108,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity<Object> handleMethodArgumentNotValid(
 		MethodArgumentNotValidException exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-		LOGGER.error(" === [Validation Exception Log2] || " + request + " || " + exception.getMessage(), exception);
+		LOGGER.warn("MethodArgumentNotValid: {}", exception.getMessage());
 
 		List<FieldError> fieldErrors = exception.getBindingResult().getFieldErrors();
 		List<String> sortedErrors = fieldErrors.stream()
@@ -147,10 +131,27 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			.map(FieldError::getDefaultMessage)
 			.toList();
 
+		HttpStatus httpStatus = toSpringHttpStatus(ErrorCode.INVALID_INPUT.getHttpStatus());
 		return new ResponseEntity<>(
 			new ExceptionResponse(sortedErrors.get(0), ErrorCode.INVALID_INPUT.getCode()),
 			headers,
-			status
+			httpStatus
+		);
+	}
+
+	/**
+	 * 필수 요청 파라미터 누락 (Spring 6+ MissingServletRequestParameterException 전용 경로)
+	 */
+	@Override
+	protected ResponseEntity<Object> handleMissingServletRequestParameter(
+		MissingServletRequestParameterException exception, HttpHeaders headers, HttpStatusCode status,
+		WebRequest request) {
+		LOGGER.warn("MissingServletRequestParameter: {}", exception.getMessage());
+		HttpStatus httpStatus = toSpringHttpStatus(ErrorCode.INVALID_INPUT.getHttpStatus());
+		return new ResponseEntity<>(
+			new ExceptionResponse(exception.getMessage(), ErrorCode.INVALID_INPUT.getCode()),
+			headers,
+			httpStatus
 		);
 	}
 
@@ -160,11 +161,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@Override
 	protected ResponseEntity<Object> handleServletRequestBindingException(
 		ServletRequestBindingException exception, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
-		LOGGER.error(" === [Validation Exception Log3] || " + request + " || " + exception.getMessage(), exception);
+		LOGGER.warn("ServletRequestBinding: {}", exception.getMessage());
+		HttpStatus httpStatus = toSpringHttpStatus(ErrorCode.INVALID_INPUT.getHttpStatus());
 		return new ResponseEntity<>(
 			new ExceptionResponse(exception.getMessage(), ErrorCode.INVALID_INPUT.getCode()),
 			headers,
-			status
+			httpStatus
 		);
 	}
+
 }

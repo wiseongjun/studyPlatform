@@ -11,4 +11,5 @@ dependencyManagement {
 dependencies {
     api project(':common_core')
     api 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    api 'jakarta.validation:jakarta.validation-api'
 }

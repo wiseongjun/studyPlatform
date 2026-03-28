@@ -16,8 +16,8 @@ public interface UserFeignClient {
 
 	@GetMapping("/internal/v1/user/{userId}/problem/solved/problemIds")
 	List<Long> getUserSolvedProblemIdList(
-		@PathVariable Long userId,
-		@RequestParam Long chapterId
+		@PathVariable("userId") Long userId,
+		@RequestParam("chapterId") Long chapterId
 	);
 
 	@PostMapping("/internal/v1/user/problem/attempt")

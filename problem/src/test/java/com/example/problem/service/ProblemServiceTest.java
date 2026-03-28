@@ -3,7 +3,6 @@ package com.example.problem.service;
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.BDDMockito.*;
-import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -174,5 +173,31 @@ class ProblemServiceTest {
 		ProblemResponse response = problemService.getRandomProblem(filter);
 
 		assertThat(response.getAnswerCorrectRate()).isNull();
+	}
+
+	@Test
+	@DisplayName("문제 제출 시 부분 정답이면 PARTIAL_CORRECT를 반환하고 상태를 갱신한다")
+	void submitProblem_partialCorrect_updatesStatus() {
+		SubmitProblemRequest request = new SubmitProblemRequest(1L, 1L, ProblemType.MULTI_CHOICE, List.of(1, 3), null);
+		ProblemAnswerDto answerDto = new ProblemAnswerDto(1L, ProblemType.MULTI_CHOICE, List.of(1, 2), null, "해설");
+
+		given(problemRepository.getProblemAnswer(1L)).willReturn(answerDto);
+
+		SubmitProblemResponse response = problemService.submitProblem(1L, request);
+
+		assertThat(response.getAnswerStatus()).isEqualTo(AnswerType.PARTIAL_CORRECT);
+		then(problemWriteService).should().updateStatus(1L, AnswerType.PARTIAL_CORRECT);
+		then(problemAsyncService).should().saveAttempt(any());
+	}
+
+	@Test
+	@DisplayName("챕터별 문제 목록이 비어 있으면 빈 리스트를 반환한다")
+	void getProblemListByChapter_empty_returnsEmptyList() {
+		given(problemRepository.findByChapterId(9L)).willReturn(List.of());
+
+		List<ProblemResponse> result = problemService.getProblemListByChapter(9L);
+
+		assertThat(result).isEmpty();
+		then(problemRepository).should(never()).getChoicesMap(anyList());
 	}
 }

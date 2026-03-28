@@ -32,7 +32,18 @@ spring:
               predicates:
                 - Path=/api/v1/chapter/**
 
-            # 2. Swagger/OpenAPI 문서 라우트
+            # 2. 내부 서비스 간 통신 라우트 (Feign 전용)
+            - id: user-service-internal
+              uri: lb://user-service
+              predicates:
+                - Path=/internal/v1/user/**
+
+            - id: problem-service-internal
+              uri: lb://problem-service
+              predicates:
+                - Path=/internal/v1/problem/**
+
+            # 3. Swagger/OpenAPI 문서 라우트
             - id: problem-api-docs
               uri: lb://problem-service
               predicates:
