@@ -27,7 +27,7 @@ public final class ProblemMarker {
 		if (selected == null || selected.isEmpty()) {
 			throw new CustomException(ErrorCode.INVALID_INPUT);
 		}
-		return correct.contains(selected.get(0)) ? AnswerType.CORRECT : AnswerType.INCORRECT;
+		return correct.contains(selected.getFirst()) ? AnswerType.CORRECT : AnswerType.INCORRECT;
 	}
 
 	private static AnswerType markMultiChoice(List<Integer> selected, List<Integer> correct) {

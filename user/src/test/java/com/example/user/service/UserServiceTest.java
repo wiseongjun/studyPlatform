@@ -1,10 +1,8 @@
 package com.example.user.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -95,8 +93,8 @@ class UserServiceTest {
 		List<SolvedProblemResponse> result = userService.getSolvedProblemList(1L);
 
 		assertThat(result).hasSize(1);
-		assertThat(result.get(0).getProblemId()).isEqualTo(10L);
-		assertThat(result.get(0).getAnswerCorrectRate()).isNull();
+		assertThat(result.getFirst().getProblemId()).isEqualTo(10L);
+		assertThat(result.getFirst().getAnswerCorrectRate()).isNull();
 	}
 
 	@Test

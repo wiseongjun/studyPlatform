@@ -37,9 +37,7 @@ public class ProblemSelector {
 	}
 
 	private List<Long> filterCandidates(List<Long> problemIds, List<Long> excludedIds) {
-		Set<Long> excludedSet = (excludedIds instanceof Set)
-			? (Set<Long>)excludedIds
-			: new HashSet<>(excludedIds);
+		Set<Long> excludedSet = new HashSet<>(excludedIds);
 
 		return problemIds.stream()
 			.filter(id -> !excludedSet.contains(id))

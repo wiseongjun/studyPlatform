@@ -1,12 +1,9 @@
 package com.example.problem.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.never;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.BDDMockito.*;
+import static org.mockito.Mockito.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -58,7 +55,8 @@ class ProblemServiceTest {
 		RandomProblemFilter filter = new RandomProblemFilter(1L, 1L);
 		List<Long> solvedIds = new ArrayList<>(List.of(2L, 3L));
 		List<Long> problemIds = List.of(1L, 2L, 3L, 4L);
-		ProblemInfoDto info = new ProblemInfoDto(1L, "title", "content", ProblemType.SINGLE_CHOICE, List.of("A", "B"), 0, 0);
+		ProblemInfoDto info = new ProblemInfoDto(1L, "title", "content", ProblemType.SINGLE_CHOICE, List.of("A", "B"),
+			0, 0);
 
 		given(problemCacheRepository.getLastSkippedId(1L, 1L)).willReturn(null);
 		given(userFeignClient.getUserSolvedProblemIdList(1L, 1L)).willReturn(solvedIds);
@@ -79,7 +77,8 @@ class ProblemServiceTest {
 		RandomProblemFilter filter = new RandomProblemFilter(1L, 1L);
 		List<Long> solvedIds = new ArrayList<>(List.of(2L));
 		List<Long> problemIds = List.of(1L, 2L, 3L, 4L);
-		ProblemInfoDto info = new ProblemInfoDto(4L, "title", "content", ProblemType.SINGLE_CHOICE, List.of("A", "B"), 0, 0);
+		ProblemInfoDto info = new ProblemInfoDto(4L, "title", "content", ProblemType.SINGLE_CHOICE, List.of("A", "B"),
+			0, 0);
 
 		given(problemCacheRepository.getLastSkippedId(1L, 1L)).willReturn(3L);
 		given(userFeignClient.getUserSolvedProblemIdList(1L, 1L)).willReturn(solvedIds);

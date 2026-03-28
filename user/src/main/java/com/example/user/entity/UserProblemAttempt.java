@@ -23,30 +23,26 @@ import com.example.constants.AnswerType;
 @Table(name = "T_USER_PROBLEM_ATTEMPT")
 public class UserProblemAttempt {
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
+	@Column(name = "user_id", nullable = false)
+	private Long userId;
+	@Column(name = "problem_id", nullable = false)
+	private Long problemId;
+	@Column(name = "chapter_id", nullable = false)
+	private Long chapterId;
+	@Enumerated(EnumType.STRING)
+	@Column(name = "answer_status", nullable = false)
+	private AnswerType answerType;
+	@CreationTimestamp
+	@Column(name = "attempted_at", nullable = false, updatable = false)
+	private LocalDateTime attemptedAt;
+
 	public UserProblemAttempt(Long userId, Long problemId, Long chapterId, AnswerType answerType) {
 		this.userId = userId;
 		this.problemId = problemId;
 		this.chapterId = chapterId;
 		this.answerType = answerType;
 	}
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
-
-	@Column(name = "user_id", nullable = false)
-	private Long userId;
-
-	@Column(name = "problem_id", nullable = false)
-	private Long problemId;
-
-	@Column(name = "chapter_id", nullable = false)
-	private Long chapterId;
-
-	@Enumerated(EnumType.STRING)
-	@Column(name = "answer_status", nullable = false)
-	private AnswerType answerType;
-
-	@CreationTimestamp
-	@Column(name = "attempted_at", nullable = false, updatable = false)
-	private LocalDateTime attemptedAt;
 }

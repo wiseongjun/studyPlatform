@@ -1,7 +1,6 @@
 package com.example.problem.domain;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import java.util.List;
 
@@ -20,7 +19,8 @@ class ProblemMarkerTest {
 	@DisplayName("단일 정답 (SINGLE_CHOICE)")
 	class SingleChoice {
 
-		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.SINGLE_CHOICE, List.of(2), null, "해설");
+		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.SINGLE_CHOICE, List.of(2), null,
+			"해설");
 
 		@Test
 		@DisplayName("정답 선택지를 고르면 CORRECT를 반환한다")
@@ -53,7 +53,8 @@ class ProblemMarkerTest {
 	@DisplayName("복수 정답 (MULTI_CHOICE)")
 	class MultiChoice {
 
-		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.MULTI_CHOICE, List.of(1, 2), null, "해설");
+		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.MULTI_CHOICE, List.of(1, 2), null,
+			"해설");
 
 		@Test
 		@DisplayName("정답 선택지를 모두 고르면 CORRECT를 반환한다")
@@ -91,7 +92,8 @@ class ProblemMarkerTest {
 	@DisplayName("주관식 (SHORT_ANSWER)")
 	class ShortAnswer {
 
-		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.SHORT_ANSWER, null, "가비지 컬렉션", "해설");
+		private final ProblemAnswerDto answer = new ProblemAnswerDto(1L, ProblemType.SHORT_ANSWER, null, "가비지 컬렉션",
+			"해설");
 
 		@Test
 		@DisplayName("정확히 일치하면 CORRECT를 반환한다")
