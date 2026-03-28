@@ -1,0 +1,14 @@
+plugins {
+    id 'base-library'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${property('springCloudVersion')}"
+    }
+}
+
+dependencies {
+    api project(':common_core')
+    api 'org.springframework.cloud:spring-cloud-starter-openfeign'
+}

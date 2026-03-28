@@ -1,0 +1,9 @@
+plugins {
+    id 'spring-cloud-app'
+    id 'querydsl'
+}
+
+dependencies {
+    implementation project(':common_web')
+    implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+}

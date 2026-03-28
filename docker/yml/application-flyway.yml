@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:TEST}?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true&profileSQL=true&logger=Slf4JLogger&maxQuerySizeToLog=999999"
+    username: ${DB_USER:test}
+    password: ${DB_PASSWORD:test}
+  flyway:
+    baseline: false
+    target: 0
+    enabled: true
+    defaultSchema: ${DB_NAME:TEST}

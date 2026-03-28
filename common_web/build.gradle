@@ -1,15 +1,23 @@
 plugins {
-	id 'base-library'
-	id 'querydsl'
+    id 'base-library'
+    id 'querydsl'
 }
 
 dependencies {
-	api project(':common_core')
+    api project(':common_core')
 
-	// Web
-	api 'org.springframework.boot:spring-boot-starter-webmvc'
-	api 'org.springframework.boot:spring-boot-starter-validation'
+    // Persistence
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    runtimeOnly 'com.mysql:mysql-connector-j'
 
-	// Swagger
-	api "org.springdoc:springdoc-openapi-starter-webmvc-ui:${property('springdocVersion')}"
+    // Cache / Redis
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+    api 'org.springframework.boot:spring-boot-starter-cache'
+
+    // Web
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+
+    // Swagger
+    api "org.springdoc:springdoc-openapi-starter-webmvc-ui:${property('springdocVersion')}"
 }

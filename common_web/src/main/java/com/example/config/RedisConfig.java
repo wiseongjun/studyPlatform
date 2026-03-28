@@ -2,6 +2,8 @@ package com.example.config;
 
 import java.time.Duration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -14,9 +16,23 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
+import io.lettuce.core.resource.ClientResources;
+import io.lettuce.core.resource.DefaultClientResources;
+
 @Configuration
 @EnableCaching
 public class RedisConfig {
+	private static final Logger LOGGER = LoggerFactory.getLogger(RedisConfig.class);
+
+	//	@Override
+	//	public CacheErrorHandler errorHandler() { 처리 필요
+	//		return new CustomCacheErrorHandler(redisConnectionFactory(clientResources()));
+	//	}
+
+	@Bean(destroyMethod = "shutdown")  // 리소스 해제를 위한 destroyMethod 설정
+	public ClientResources clientResources() {
+		return DefaultClientResources.create();  // 기본 클라이언트 리소스 생성
+	}
 
 	@Bean
 	public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
