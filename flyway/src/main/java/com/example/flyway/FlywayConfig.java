@@ -13,6 +13,9 @@ public class FlywayConfig {
 	@Value("${spring.flyway.target}")
 	private String target;
 
+	@Value("${spring.flyway.defaultSchema}")
+	private String defaultSchema;
+
 	@Bean
 	public Flyway flyway(DataSource dataSource) {
 		MigrationVersion version;
@@ -25,6 +28,8 @@ public class FlywayConfig {
 		Flyway flyway = Flyway
 			.configure()
 			.dataSource(dataSource)
+			.schemas(defaultSchema)
+			.defaultSchema(defaultSchema)
 			.outOfOrder(true)
 			.target(version)
 			.load();
