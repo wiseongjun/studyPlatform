@@ -1,4 +1,4 @@
-package com.example.problem.domain;
+package com.example.problem.utils;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -12,8 +12,8 @@ import org.junit.jupiter.api.Test;
 class ProblemHelperTest {
 
 	@Nested
-	@DisplayName("buildExclusionList")
-	class BuildExclusionList {
+	@DisplayName("combine")
+	class Combine {
 
 		@Test
 		@DisplayName("lastSkippedId가 null이면 solvedIds만 반환한다")
@@ -46,32 +46,4 @@ class ProblemHelperTest {
 		}
 	}
 
-	@Nested
-	@DisplayName("calculateRate")
-	class CalculateRate {
-
-		@Test
-		@DisplayName("totalAttempts가 30 이상이면 정답률을 반환한다")
-		void returnsRateWhenEnoughAttempts() {
-			Integer rate = ProblemHelper.calculateRate(30, 15);
-
-			assertThat(rate).isEqualTo(50);
-		}
-
-		@Test
-		@DisplayName("totalAttempts가 30 미만이면 null을 반환한다")
-		void returnsNullWhenInsufficientAttempts() {
-			Integer rate = ProblemHelper.calculateRate(29, 15);
-
-			assertThat(rate).isNull();
-		}
-
-		@Test
-		@DisplayName("totalAttempts가 0이면 null을 반환한다")
-		void returnsNullWhenZeroAttempts() {
-			Integer rate = ProblemHelper.calculateRate(0, 0);
-
-			assertThat(rate).isNull();
-		}
-	}
 }

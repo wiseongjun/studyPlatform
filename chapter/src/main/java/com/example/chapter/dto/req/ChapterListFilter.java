@@ -10,6 +10,7 @@ import lombok.Setter;
 import com.example.chapter.dto.internal.ChapterListCondition;
 import com.example.constants.ChapterCategory;
 
+@Schema(description = "단원 목록 조회 필터")
 @Getter
 @Setter
 @NoArgsConstructor

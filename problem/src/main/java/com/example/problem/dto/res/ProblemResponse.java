@@ -25,7 +25,7 @@ public class ProblemResponse {
 	private String content;
 
 	@Schema(description = "문제 유형")
-	private ProblemType answerType;
+	private ProblemType problemType;
 
 	@Schema(description = "선택지 목록 (객관식)", example = "[\"메모리 할당\", \"메모리 해제\", \"스레드 관리\", \"예외 처리\", \"파일 입출력\"]")
 	private List<String> choices;

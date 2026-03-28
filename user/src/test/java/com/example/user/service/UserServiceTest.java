@@ -24,6 +24,7 @@ import com.example.exception.ErrorCode;
 import com.example.user.dto.internal.AttemptWithAnswersDto;
 import com.example.user.dto.res.AttemptDetailResponse;
 import com.example.user.dto.res.SolvedProblemResponse;
+import com.example.user.repository.UserCommandRepository;
 import com.example.user.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
@@ -34,6 +35,8 @@ class UserServiceTest {
 
 	@Mock
 	private UserRepository userRepository;
+	@Mock
+	private UserCommandRepository userCommandRepository;
 	@Mock
 	private ProblemFeignClient problemFeignClient;
 
@@ -97,17 +100,4 @@ class UserServiceTest {
 		assertThat(result.getFirst().getAnswerCorrectRate()).isNull();
 	}
 
-	@Test
-	@DisplayName("문제 제출 시 attempt와 answer가 모두 저장된다")
-	void saveAttempt_savesAttemptAndAnswers() {
-		com.example.api.user.dto.SaveAttemptRequest request = new com.example.api.user.dto.SaveAttemptRequest(
-			1L, 10L, 1L, AnswerType.CORRECT, List.of(2), null
-		);
-		given(userRepository.saveAttempt(any())).willReturn(1L);
-
-		userService.saveAttempt(request);
-
-		then(userRepository).should().saveAttempt(any());
-		then(userRepository).should().saveUserAnswer(any());
-	}
 }

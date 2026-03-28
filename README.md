@@ -28,8 +28,10 @@ Spring Cloud 기반 **학습/퀴즈 플랫폼** 백엔드입니다.
 
 ### 설계 시 주로 고려한 사항
 
+- **DDD (Aggregate Root)**: `Problem` 엔티티가 `choices`, `answers`, `status`를 소유하며 채점 로직(`grade()`)을 직접 수행. 문제 유형(`ProblemType`)은 엔티티가 관리하며, 클라이언트 요청이 아닌 서버가 판단. Service는 오케스트레이션만 담당
 - **멀티 모듈 + 경계**: 도메인별 Gradle 모듈, 서비스 간 호출은 `common_api` Feign + `/internal/v1/**` REST
-- **DTO 계층**: `req` / `internal` / `res` 분리, QueryDSL 조건은 `repository/support/*QuerySupport`로 재사용(Chapter·Problem·User)
+- **CQRS**: 각 모듈의 Repository를 읽기(`ProblemRepository`, `UserRepository`)와 쓰기(`ProblemCommandRepository`, `UserCommandRepository`)로 분리
+- **DTO 계층**: `req` / `res` 분리, QueryDSL 조건은 `repository/support/*QuerySupport`로 재사용(Chapter·Problem·User)
 - **트랜잭션·비동기**: DB 쓰기는 `ProblemWriteService` 등 `@Transactional` 격리, Feign·`@Async`는 트랜잭션 밖(`ProblemAsyncService`)
 - **동시성**: `ProblemStatus` 갱신은 dirty checking 대신 단일 `UPDATE` 쿼리
 - **테스트**: 도메인·서비스·MOCK 테스트 + `problem`·`user` 일부 `@SpringBootTest` 통합 테스트(H2·Feign MOCK)
@@ -68,12 +70,13 @@ studyPlatform/
 ├── gateway/                  # API Gateway + Swagger 집계 (:8080)
 ├── chapter/                  # 단원 API (:8083)
 ├── problem/                  # 문제·랜덤·제출·내부 problem API (:8082)
-│   ├── domain/               # ProblemMarker, ProblemHelper, ProblemSelector(POJO)
-│   ├── repository/           # ProblemRepository, ProblemCommandRepository, support/
-│   ├── service/              # ProblemService, ProblemWriteService, ProblemApiMapper, …
+│   ├── entity/               # Problem(Aggregate Root), ProblemChoice, ProblemAnswer, ProblemStatus
+│   ├── repository/           # ProblemRepository(읽기), ProblemCommandRepository(쓰기), support/
+│   ├── service/              # ProblemService(Application Service), ProblemWriteService, ProblemApiMapper
+│   ├── utils/                # ProblemHelper, ProblemSelector
 │   └── config/               # Async, Random·Selector 빈
 ├── user/                     # 풀이 이력·내부 user API (:8081)
-│   ├── repository/support/   # UserQuerySupport
+│   ├── repository/           # UserRepository(읽기), UserCommandRepository(쓰기), support/
 │   └── service/
 └── flyway/                   # DB 마이그레이션 전용 모듈
 ```
@@ -107,7 +110,7 @@ studyPlatform/
 | Method | Endpoint                             | 설명                        |
 |--------|--------------------------------------|---------------------------|
 | GET    | `/api/v1/problem/random`             | 단원별 랜덤 1문제 (미풀이·직전 스킵 제외) |
-| POST   | `/api/v1/problem/{problemId}/submit` | 답안 제출·채점                  |
+| POST   | `/api/v1/problem/{problemId}/submit` | 답안 제출·채점 (문제 유형은 서버가 판단) |
 | GET    | `/api/v1/problem/list`               | 챕터별 문제 목록                 |
 
 ### user-service (외부, Gateway `/api/v1/user`)

@@ -2,14 +2,20 @@ package com.example.response;
 
 import java.io.Serializable;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Getter;
 
 import com.example.exception.CustomException;
 import com.example.exception.ErrorCode;
 
+@Schema(description = "에러 응답")
 @Getter
 public class ExceptionResponse implements Serializable {
+
+	@Schema(description = "에러 메시지", example = "올바르지 않은 입력입니다.")
 	private final String message;
+
+	@Schema(description = "에러 코드", example = "4")
 	private final int errorCode;
 
 	// 기본값: SERVER_ERROR
