@@ -26,6 +26,7 @@
 - Chapter
 - Problem - delete 컬럼으로 관리 - 수정 시 기존 삭제처리(User 시도 정보때문에) 새로 만들기
 - ProblemStatus - 정답률, 시도 횟수 등 집계 데이터
+- ProblemChoice - 객관식 지문
 - ProblemAnswer - Problem Type에 맞는 정답
 - User
 - UserProblemAttempt - 사용자가 시도 정보 리스트(문제 + 정답 오답 포함)

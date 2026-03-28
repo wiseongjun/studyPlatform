@@ -6,7 +6,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
-import com.example.chapter.dto.ChapterResponse;
+import com.example.chapter.dto.req.ChapterListFilter;
+import com.example.chapter.dto.res.ChapterListResponse;
 import com.example.chapter.repository.ChapterRepository;
 
 @Service
@@ -15,7 +16,7 @@ public class ChapterService {
 
 	private final ChapterRepository chapterRepository;
 
-	public List<ChapterResponse> getChapterList() {
-		return chapterRepository.getChapterList();
+	public List<ChapterListResponse> getChapterList(ChapterListFilter filter) {
+		return chapterRepository.getChapterList(filter.toCondition());
 	}
 }

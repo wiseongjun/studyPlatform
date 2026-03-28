@@ -18,7 +18,10 @@ public enum ErrorCode {
 	PROBLEM_NOT_FOUND(200, "존재하지 않는 문제입니다."),
 
 	// User
-	USER_NOT_FOUND(201, "존재하지 않는 사용자입니다.");
+	USER_NOT_FOUND(301, "존재하지 않는 사용자입니다."),
+
+	// Chapter
+	CHAPTER_NOT_FOUND(401, "존재하지 않는 단원입니다.");
 
 	private final int code;
 	private final String message;
