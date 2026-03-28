@@ -9,9 +9,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import com.example.response.ExceptionResponse;
 import com.example.user.dto.res.AttemptDetailResponse;
 import com.example.user.dto.res.SolvedProblemResponse;
 import com.example.user.service.UserService;
@@ -25,16 +31,26 @@ public class UserController {
 	private final UserService userService;
 
 	@Operation(summary = "풀었던 문제 목록 조회", description = "사용자가 풀었던 문제 목록을 반환합니다.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "문제 목록 조회 성공")
+	})
 	@GetMapping("/{userId}/problem/solved/list")
-	public ResponseEntity<List<SolvedProblemResponse>> getSolvedProblemList(@PathVariable Long userId) {
+	public ResponseEntity<List<SolvedProblemResponse>> getSolvedProblemList(
+		@Parameter(description = "사용자 ID", example = "1") @PathVariable Long userId
+	) {
 		return ResponseEntity.ok(userService.getSolvedProblemList(userId));
 	}
 
 	@Operation(summary = "풀었던 문제 상세 조회", description = "문제 ID 기준 마지막 시도에 대한 상세 정보를 반환합니다. 사용자 답안, 정답, 해설, 정답률을 포함합니다.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "문제 상세 조회 성공"),
+		@ApiResponse(responseCode = "404", description = "풀이 기록이 없음",
+			content = @Content(schema = @Schema(implementation = ExceptionResponse.class)))
+	})
 	@GetMapping("/{userId}/problem/solved/{problemId}")
 	public ResponseEntity<AttemptDetailResponse> getSolvedProblemDetail(
-		@PathVariable Long userId,
-		@PathVariable Long problemId
+		@Parameter(description = "사용자 ID", example = "1") @PathVariable Long userId,
+		@Parameter(description = "문제 ID", example = "1") @PathVariable Long problemId
 	) {
 		return ResponseEntity.ok(userService.getSolvedProblemDetail(problemId, userId));
 	}

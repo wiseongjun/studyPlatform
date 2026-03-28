@@ -76,7 +76,7 @@ class ProblemControllerTest {
 	@DisplayName("POST /submit — 필수 필드 누락 시 400")
 	void submitProblem_missingRequiredFields_returnsBadRequest() throws Exception {
 		String json = """
-			{"userId":1,"chapterId":1}
+			{}
 			""";
 
 		mockMvc.perform(post("/api/v1/problem/5/submit")
@@ -94,9 +94,7 @@ class ProblemControllerTest {
 		);
 		given(problemService.submitProblem(eq(5L), any())).willReturn(response);
 
-		SubmitProblemRequest request = new SubmitProblemRequest(
-			1L, 2L, ProblemType.SINGLE_CHOICE, List.of(2), null
-		);
+		SubmitProblemRequest request = new SubmitProblemRequest(1L, List.of(2), null);
 
 		mockMvc.perform(post("/api/v1/problem/5/submit")
 				.contentType(MediaType.APPLICATION_JSON)
@@ -106,7 +104,7 @@ class ProblemControllerTest {
 			.andExpect(jsonPath("$.answerStatus").value("CORRECT"));
 
 		then(problemService).should().submitProblem(eq(5L), argThat(r ->
-			r.getUserId().equals(1L) && r.getChapterId().equals(2L) && r.getAnswerType() == ProblemType.SINGLE_CHOICE));
+			r.getUserId().equals(1L)));
 	}
 
 	@Test
@@ -124,9 +122,7 @@ class ProblemControllerTest {
 	void submitProblem_problemNotFound_returnsNotFound() throws Exception {
 		given(problemService.submitProblem(eq(9L), any())).willThrow(new CustomException(ErrorCode.PROBLEM_NOT_FOUND));
 
-		SubmitProblemRequest request = new SubmitProblemRequest(
-			1L, 1L, ProblemType.SINGLE_CHOICE, List.of(1), null
-		);
+		SubmitProblemRequest request = new SubmitProblemRequest(1L, List.of(1), null);
 
 		mockMvc.perform(post("/api/v1/problem/9/submit")
 				.contentType(MediaType.APPLICATION_JSON)

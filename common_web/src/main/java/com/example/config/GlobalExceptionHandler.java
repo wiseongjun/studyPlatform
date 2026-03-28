@@ -131,9 +131,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 			.map(FieldError::getDefaultMessage)
 			.toList();
 
+		String message = sortedErrors.isEmpty()
+			? ErrorCode.INVALID_INPUT.getMessage()
+			: sortedErrors.get(0);
 		HttpStatus httpStatus = toSpringHttpStatus(ErrorCode.INVALID_INPUT.getHttpStatus());
 		return new ResponseEntity<>(
-			new ExceptionResponse(sortedErrors.get(0), ErrorCode.INVALID_INPUT.getCode()),
+			new ExceptionResponse(message, ErrorCode.INVALID_INPUT.getCode()),
 			headers,
 			httpStatus
 		);

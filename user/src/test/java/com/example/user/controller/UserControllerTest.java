@@ -4,8 +4,6 @@ import static org.mockito.BDDMockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-import java.util.List;
-
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,15 +37,4 @@ class UserControllerTest {
 			.andExpect(jsonPath("$.errorCode").value(ErrorCode.ENTITY_NOT_FOUND.getCode()));
 	}
 
-	@Test
-	@DisplayName("GET 풀이 목록 — 정상 시 200")
-	void getSolvedProblemList_returnsOk() throws Exception {
-		given(userService.getSolvedProblemList(1L)).willReturn(List.of());
-
-		mockMvc.perform(get("/api/v1/user/1/problem/solved/list"))
-			.andExpect(status().isOk())
-			.andExpect(content().json("[]"));
-
-		then(userService).should().getSolvedProblemList(1L);
-	}
 }

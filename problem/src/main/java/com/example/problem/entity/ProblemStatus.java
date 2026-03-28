@@ -12,11 +12,15 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import com.example.util.MathUtils;
+
 @Getter
 @NoArgsConstructor
 @Entity
 @Table(name = "T_PROBLEM_STATUS")
 public class ProblemStatus {
+
+	private static final int MIN_ATTEMPTS_FOR_RATE = 30;
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,4 +35,10 @@ public class ProblemStatus {
 
 	@Column(name = "correct_attempts", nullable = false)
 	private int correctAttempts;
+
+	public Integer calculateCorrectRate() {
+		return totalAttempts >= MIN_ATTEMPTS_FOR_RATE
+			? MathUtils.roundPercentage(totalAttempts, correctAttempts)
+			: null;
+	}
 }

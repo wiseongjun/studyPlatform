@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,9 @@ public class ChapterController {
 	private final ChapterService chapterService;
 
 	@Operation(summary = "단원 목록 조회", description = "이름 또는 카테고리로 필터링하여 단원 목록을 반환합니다.")
+	@ApiResponses({
+		@ApiResponse(responseCode = "200", description = "단원 목록 조회 성공")
+	})
 	@GetMapping("/list")
 	public ResponseEntity<List<ChapterListResponse>> getChapterList(
 		@ParameterObject @ModelAttribute @Valid ChapterListFilter filter

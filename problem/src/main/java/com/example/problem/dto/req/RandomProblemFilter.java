@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+@Schema(description = "랜덤 문제 조회 필터")
 @Getter
 @Setter
 @NoArgsConstructor
