@@ -10,7 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import com.example.constants.AnswerType;
-import com.example.problem.repository.ProblemRepository;
+import com.example.problem.repository.ProblemCommandRepository;
 
 @ExtendWith(MockitoExtension.class)
 class ProblemWriteServiceTest {
@@ -19,13 +19,13 @@ class ProblemWriteServiceTest {
 	private ProblemWriteService problemWriteService;
 
 	@Mock
-	private ProblemRepository problemRepository;
+	private ProblemCommandRepository problemCommandRepository;
 
 	@Test
 	@DisplayName("updateStatus는 incrementAttemptCounts를 한 번 호출한다")
 	void updateStatus_delegatesToRepository() {
 		problemWriteService.updateStatus(99L, AnswerType.PARTIAL_CORRECT);
 
-		then(problemRepository).should().incrementAttemptCounts(99L, AnswerType.PARTIAL_CORRECT);
+		then(problemCommandRepository).should().incrementAttemptCounts(99L, AnswerType.PARTIAL_CORRECT);
 	}
 }

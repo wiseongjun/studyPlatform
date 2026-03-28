@@ -14,3 +14,8 @@ VALUES (1, 1, 1, 'Choice A'),
        (3, 1, 3, 'Choice C'),
        (4, 2, 1, 'Choice D'),
        (5, 2, 2, 'Choice E');
+
+INSERT INTO T_PROBLEM_ANSWER (id, problem_id, answer_number, answer_text)
+VALUES (1, 1, 1, NULL),
+       (2, 2, 1, NULL),
+       (3, 2, 2, NULL);

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
+import java.util.Map;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -82,5 +83,33 @@ class ProblemRepositoryTest {
 			.isInstanceOf(CustomException.class)
 			.extracting("errorCode")
 			.isEqualTo(ErrorCode.PROBLEM_NOT_FOUND.getCode());
+	}
+
+	@Test
+	@DisplayName("findByIds — ID 목록이 비어 있으면 빈 리스트(IN 쿼리 생략)")
+	void findByIds_emptyList_returnsEmpty() {
+		assertThat(problemRepository.findByIds(List.of())).isEmpty();
+	}
+
+	@Test
+	@DisplayName("findByIds — ID 목록이 null이면 빈 리스트")
+	void findByIds_null_returnsEmpty() {
+		assertThat(problemRepository.findByIds(null)).isEmpty();
+	}
+
+	@Test
+	@DisplayName("getChoicesMap — ID 목록이 비어 있으면 빈 맵(IN 쿼리 생략)")
+	void getChoicesMap_emptyList_returnsEmptyMap() {
+		Map<Long, List<String>> map = problemRepository.getChoicesMap(List.of());
+
+		assertThat(map).isEmpty();
+	}
+
+	@Test
+	@DisplayName("getChoicesMap — ID 목록이 null이면 빈 맵")
+	void getChoicesMap_null_returnsEmptyMap() {
+		Map<Long, List<String>> map = problemRepository.getChoicesMap(null);
+
+		assertThat(map).isEmpty();
 	}
 }

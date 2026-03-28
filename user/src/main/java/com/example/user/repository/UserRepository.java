@@ -17,6 +17,7 @@ import com.example.user.entity.QUserProblemAnswer;
 import com.example.user.entity.QUserProblemAttempt;
 import com.example.user.entity.UserProblemAnswer;
 import com.example.user.entity.UserProblemAttempt;
+import com.example.user.repository.support.UserQuerySupport;
 
 @Repository
 @RequiredArgsConstructor
@@ -32,7 +33,7 @@ public class UserRepository {
 		return queryFactory
 			.select(qAttempt.problemId).distinct()
 			.from(qAttempt)
-			.where(qAttempt.userId.eq(userId))
+			.where(UserQuerySupport.attemptUserIdEq(userId))
 			.fetch();
 	}
 
@@ -41,7 +42,7 @@ public class UserRepository {
 		return queryFactory
 			.select(qAttempt.problemId).distinct()
 			.from(qAttempt)
-			.where(qAttempt.userId.eq(userId), qAttempt.chapterId.eq(chapterId))
+			.where(UserQuerySupport.attemptUserIdEq(userId), UserQuerySupport.attemptChapterIdEq(chapterId))
 			.fetch();
 	}
 
@@ -51,7 +52,7 @@ public class UserRepository {
 
 		UserProblemAttempt attempt = queryFactory
 			.selectFrom(qAttempt)
-			.where(qAttempt.userId.eq(userId), qAttempt.problemId.eq(problemId))
+			.where(UserQuerySupport.attemptUserIdEq(userId), UserQuerySupport.attemptProblemIdEq(problemId))
 			.orderBy(qAttempt.attemptedAt.desc())
 			.limit(1)
 			.fetchOne();
@@ -63,13 +64,13 @@ public class UserRepository {
 		List<Integer> userChoices = queryFactory
 			.select(qAnswer.choiceNumber)
 			.from(qAnswer)
-			.where(qAnswer.attemptId.eq(attempt.getId()), qAnswer.choiceNumber.isNotNull())
+			.where(UserQuerySupport.answerAttemptIdEq(attempt.getId()), UserQuerySupport.answerChoiceNumberIsNotNull())
 			.fetch();
 
 		String userTextAnswer = queryFactory
 			.select(qAnswer.answerText)
 			.from(qAnswer)
-			.where(qAnswer.attemptId.eq(attempt.getId()), qAnswer.answerText.isNotNull())
+			.where(UserQuerySupport.answerAttemptIdEq(attempt.getId()), UserQuerySupport.answerTextIsNotNull())
 			.fetchFirst();
 
 		return new AttemptWithAnswersDto(

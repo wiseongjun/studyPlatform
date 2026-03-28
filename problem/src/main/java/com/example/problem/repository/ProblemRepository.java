@@ -1,6 +1,7 @@
 package com.example.problem.repository;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -13,7 +14,6 @@ import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
 
-import com.example.constants.AnswerType;
 import com.example.exception.CustomException;
 import com.example.exception.ErrorCode;
 import com.example.problem.dto.internal.ProblemAnswerDto;
@@ -24,7 +24,7 @@ import com.example.problem.entity.ProblemStatus;
 import com.example.problem.entity.QProblem;
 import com.example.problem.entity.QProblemAnswer;
 import com.example.problem.entity.QProblemChoice;
-import com.example.problem.entity.QProblemStatus;
+import com.example.problem.repository.support.ProblemQuerySupport;
 
 @Repository
 @RequiredArgsConstructor
@@ -39,7 +39,7 @@ public class ProblemRepository {
 		return queryFactory
 			.select(qProblem.id)
 			.from(qProblem)
-			.where(qProblem.chapterId.eq(chapterId), qProblem.deleted.isFalse())
+			.where(ProblemQuerySupport.problemChapterIdEq(chapterId), ProblemQuerySupport.problemNotDeleted())
 			.fetch();
 	}
 
@@ -50,7 +50,7 @@ public class ProblemRepository {
 		Problem problem = queryFactory
 			.selectFrom(qProblem)
 			.leftJoin(qProblem.problemStatus).fetchJoin()
-			.where(qProblem.id.eq(problemId))
+			.where(ProblemQuerySupport.problemIdEq(problemId))
 			.fetchOne();
 
 		if (problem == null) {
@@ -60,7 +60,7 @@ public class ProblemRepository {
 		List<String> choices = queryFactory
 			.select(qChoice.choiceText)
 			.from(qChoice)
-			.where(qChoice.problemId.eq(problemId))
+			.where(ProblemQuerySupport.choiceProblemIdEq(problemId))
 			.orderBy(qChoice.choiceNumber.asc())
 			.fetch();
 
@@ -81,63 +81,41 @@ public class ProblemRepository {
 
 	public ProblemAnswerDto getProblemAnswer(Long problemId) {
 		QProblem qProblem = QProblem.problem;
-		QProblemAnswer qAnswer = QProblemAnswer.problemAnswer;
 
 		Problem problem = queryFactory
 			.selectFrom(qProblem)
-			.where(qProblem.id.eq(problemId))
+			.where(ProblemQuerySupport.problemIdEq(problemId))
 			.fetchOne();
 
 		if (problem == null) {
 			throw new CustomException(ErrorCode.PROBLEM_NOT_FOUND);
 		}
 
-		List<Integer> correctChoices = queryFactory
-			.select(qAnswer.choiceNumber)
-			.from(qAnswer)
-			.where(qAnswer.problemId.eq(problemId), qAnswer.choiceNumber.isNotNull())
-			.fetch();
-
-		String correctTextAnswer = queryFactory
-			.select(qAnswer.answerText)
-			.from(qAnswer)
-			.where(qAnswer.problemId.eq(problemId), qAnswer.answerText.isNotNull())
-			.fetchFirst();
+		AnswerParts answers = fetchAnswerParts(problemId);
 
 		return new ProblemAnswerDto(
 			problemId,
 			problem.getType(),
-			correctChoices,
-			correctTextAnswer,
+			answers.correctChoices(),
+			answers.correctTextAnswer(),
 			problem.getExplanation()
 		);
 	}
 
 	public ProblemDetailDto getProblemDetail(Long problemId) {
 		QProblem qProblem = QProblem.problem;
-		QProblemAnswer qAnswer = QProblemAnswer.problemAnswer;
 
 		Problem problem = queryFactory
 			.selectFrom(qProblem)
 			.leftJoin(qProblem.problemStatus).fetchJoin()
-			.where(qProblem.id.eq(problemId))
+			.where(ProblemQuerySupport.problemIdEq(problemId))
 			.fetchOne();
 
 		if (problem == null) {
 			throw new CustomException(ErrorCode.PROBLEM_NOT_FOUND);
 		}
 
-		List<Integer> correctChoices = queryFactory
-			.select(qAnswer.choiceNumber)
-			.from(qAnswer)
-			.where(qAnswer.problemId.eq(problemId), qAnswer.choiceNumber.isNotNull())
-			.fetch();
-
-		String correctTextAnswer = queryFactory
-			.select(qAnswer.answerText)
-			.from(qAnswer)
-			.where(qAnswer.problemId.eq(problemId), qAnswer.answerText.isNotNull())
-			.fetchFirst();
+		AnswerParts answers = fetchAnswerParts(problemId);
 
 		ProblemStatus status = problem.getProblemStatus();
 		int total = status != null ? status.getTotalAttempts() : 0;
@@ -149,19 +127,22 @@ public class ProblemRepository {
 			problem.getContent(),
 			problem.getExplanation(),
 			problem.getType(),
-			correctChoices,
-			correctTextAnswer,
+			answers.correctChoices(),
+			answers.correctTextAnswer(),
 			total,
 			correct
 		);
 	}
 
 	public List<Problem> findByIds(List<Long> problemIds) {
+		if (problemIds == null || problemIds.isEmpty()) {
+			return List.of();
+		}
 		QProblem qProblem = QProblem.problem;
 		return queryFactory
 			.selectFrom(qProblem)
 			.leftJoin(qProblem.problemStatus).fetchJoin()
-			.where(qProblem.id.in(problemIds))
+			.where(ProblemQuerySupport.problemIdIn(problemIds))
 			.fetch();
 	}
 
@@ -170,17 +151,20 @@ public class ProblemRepository {
 		return queryFactory
 			.selectFrom(qProblem)
 			.leftJoin(qProblem.problemStatus).fetchJoin()
-			.where(qProblem.chapterId.eq(chapterId), qProblem.deleted.isFalse())
+			.where(ProblemQuerySupport.problemChapterIdEq(chapterId), ProblemQuerySupport.problemNotDeleted())
 			.fetch();
 	}
 
 	public Map<Long, List<String>> getChoicesMap(List<Long> problemIds) {
+		if (problemIds == null || problemIds.isEmpty()) {
+			return Collections.emptyMap();
+		}
 		QProblemChoice qChoice = QProblemChoice.problemChoice;
 		Map<Long, List<String>> choicesMap = new HashMap<>();
 		List<Tuple> tuples = queryFactory
 			.select(qChoice.problemId, qChoice.choiceText)
 			.from(qChoice)
-			.where(qChoice.problemId.in(problemIds))
+			.where(ProblemQuerySupport.choiceProblemIdIn(problemIds))
 			.orderBy(qChoice.choiceNumber.asc())
 			.fetch();
 		tuples.forEach(tuple -> choicesMap
@@ -189,17 +173,29 @@ public class ProblemRepository {
 		return choicesMap;
 	}
 
-	// 동시성 이슈 방지: SELECT → UPDATE 대신 DB 레벨 atomic update 사용
-	// dirty checking으로 하면 동시 요청 시 totalAttempts 유실 가능
-	public void incrementAttemptCounts(Long problemId, AnswerType answerType) {
-		QProblemStatus qStatus = QProblemStatus.problemStatus;
-		queryFactory.update(qStatus)
-			.set(qStatus.totalAttempts, qStatus.totalAttempts.add(1))
-			.set(qStatus.correctAttempts,
-				answerType == AnswerType.CORRECT
-					? qStatus.correctAttempts.add(1)
-					: qStatus.correctAttempts)
-			.where(qStatus.problem.id.eq(problemId))
-			.execute();
+	private AnswerParts fetchAnswerParts(Long problemId) {
+		QProblemAnswer qAnswer = QProblemAnswer.problemAnswer;
+		List<Tuple> rows = queryFactory
+			.select(qAnswer.choiceNumber, qAnswer.answerText)
+			.from(qAnswer)
+			.where(ProblemQuerySupport.answerProblemIdEq(problemId))
+			.orderBy(qAnswer.id.asc())
+			.fetch();
+		List<Integer> correctChoices = new ArrayList<>();
+		String correctTextAnswer = null;
+		for (Tuple tuple : rows) {
+			Integer choiceNumber = tuple.get(qAnswer.choiceNumber);
+			if (choiceNumber != null) {
+				correctChoices.add(choiceNumber);
+			}
+			String answerText = tuple.get(qAnswer.answerText);
+			if (answerText != null && correctTextAnswer == null) {
+				correctTextAnswer = answerText;
+			}
+		}
+		return new AnswerParts(correctChoices, correctTextAnswer);
+	}
+
+	private record AnswerParts(List<Integer> correctChoices, String correctTextAnswer) {
 	}
 }

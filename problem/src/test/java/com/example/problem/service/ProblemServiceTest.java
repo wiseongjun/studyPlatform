@@ -12,8 +12,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.example.api.problem.dto.ProblemSummaryResponse;
 import com.example.api.user.client.UserFeignClient;
 import com.example.constants.AnswerType;
 import com.example.constants.ProblemType;
@@ -47,6 +49,8 @@ class ProblemServiceTest {
 	private ProblemSelector problemSelector;
 	@Mock
 	private UserFeignClient userFeignClient;
+	@Spy
+	private ProblemApiMapper problemApiMapper = new ProblemApiMapper();
 
 	@Test
 	@DisplayName("lastSkipped가 없을 때 풀지 않은 문제를 랜덤으로 반환한다")
@@ -198,6 +202,26 @@ class ProblemServiceTest {
 		List<ProblemResponse> result = problemService.getProblemListByChapter(9L);
 
 		assertThat(result).isEmpty();
+		then(problemRepository).should(never()).getChoicesMap(anyList());
+	}
+
+	@Test
+	@DisplayName("getProblemsIncludingDeleted — problemIds가 비어 있으면 빈 목록, IN 조회 호출 없음")
+	void getProblemsIncludingDeleted_empty_skipsRepository() {
+		List<ProblemSummaryResponse> result = problemService.getProblemsIncludingDeleted(List.of());
+
+		assertThat(result).isEmpty();
+		then(problemRepository).should(never()).findByIds(anyList());
+		then(problemRepository).should(never()).getChoicesMap(anyList());
+	}
+
+	@Test
+	@DisplayName("getProblemsIncludingDeleted — problemIds가 null이면 빈 목록, IN 조회 호출 없음")
+	void getProblemsIncludingDeleted_null_skipsRepository() {
+		List<ProblemSummaryResponse> result = problemService.getProblemsIncludingDeleted(null);
+
+		assertThat(result).isEmpty();
+		then(problemRepository).should(never()).findByIds(anyList());
 		then(problemRepository).should(never()).getChoicesMap(anyList());
 	}
 }
