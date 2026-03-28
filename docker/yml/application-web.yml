@@ -12,6 +12,8 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
+      naming:
+        physical-strategy: com.example.config.TablePreservingNamingStrategy
     show-sql: true
     properties:
       hibernate:

@@ -6,6 +6,14 @@ spring:
       - common
   cloud:
     gateway:
+      globalcors:
+        add-to-simple-url-handler-mapping: true
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: false
       server:
         webflux:
           # 서비스 디스커버리 기반 자동 라우팅 설정
