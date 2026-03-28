@@ -16,6 +16,7 @@ public enum ErrorCode {
 
 	// Problem
 	PROBLEM_NOT_FOUND(200, "존재하지 않는 문제입니다."),
+	NO_PROBLEM_AVAILABLE(201, "풀 수 있는 문제가 없습니다."),
 
 	// User
 	USER_NOT_FOUND(301, "존재하지 않는 사용자입니다."),

@@ -11,8 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class SaveAnswerCommand {
 
-	private Long userId;
-	private Long problemId;
+	private Long attemptId;
 	private List<Integer> userChoices;
 	private String userTextAnswer;
 }

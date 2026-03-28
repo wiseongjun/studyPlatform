@@ -11,14 +11,12 @@ import com.example.constants.ProblemType;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProblemDetailDto {
+public class ProblemInfoDto {
 	private Long problemId;
 	private String title;
 	private String content;
-	private String explanation;
 	private ProblemType type;
-	private List<Integer> correctChoices;
-	private String correctTextAnswer;
+	private List<String> choices;
 	private int totalAttempts;
 	private int correctAttempts;
 }

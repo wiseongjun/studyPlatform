@@ -6,11 +6,17 @@ import org.springframework.stereotype.Repository;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 
 import com.example.user.dto.internal.AttemptWithAnswersDto;
 import com.example.user.dto.internal.SaveAnswerCommand;
 import com.example.user.dto.internal.SaveAttemptCommand;
+import com.example.user.entity.QUserProblemAnswer;
+import com.example.user.entity.QUserProblemAttempt;
+import com.example.user.entity.UserProblemAnswer;
+import com.example.user.entity.UserProblemAttempt;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,26 +24,84 @@ public class UserRepository {
 
 	private final JPAQueryFactory queryFactory;
 
-	public List<Long> getSolvedProblemIds(Long userId) {
-		// TODO: T_USER_PROBLEM_ATTEMPT에서 userId 기준 problemId 목록 조회
-		return null;
-	}
+	@PersistenceContext
+	private EntityManager entityManager;
 
-	public AttemptWithAnswersDto getLastAttemptDetail(Long userId, Long problemId) {
-		// TODO: T_USER_PROBLEM_ATTEMPT + T_USER_PROBLEM_ANSWER 조인 조회 (userId, problemId 기준 최신 attempt)
-		return null;
+	public List<Long> getSolvedProblemIds(Long userId) {
+		QUserProblemAttempt qAttempt = QUserProblemAttempt.userProblemAttempt;
+		return queryFactory
+			.select(qAttempt.problemId).distinct()
+			.from(qAttempt)
+			.where(qAttempt.userId.eq(userId))
+			.fetch();
 	}
 
 	public List<Long> getSolvedProblemIds(Long userId, Long chapterId) {
-		// TODO: T_USER_PROBLEM_ATTEMPT에서 userId, chapterId 기준 미삭제 problemId 목록 조회 (WHERE is_delete = false)
-		return null;
+		QUserProblemAttempt qAttempt = QUserProblemAttempt.userProblemAttempt;
+		return queryFactory
+			.select(qAttempt.problemId).distinct()
+			.from(qAttempt)
+			.where(qAttempt.userId.eq(userId), qAttempt.chapterId.eq(chapterId))
+			.fetch();
 	}
 
-	public void saveAttempt(SaveAttemptCommand command) {
-		// TODO: T_USER_PROBLEM_ATTEMPT 저장
+	public AttemptWithAnswersDto getLastAttemptDetail(Long userId, Long problemId) {
+		QUserProblemAttempt qAttempt = QUserProblemAttempt.userProblemAttempt;
+		QUserProblemAnswer qAnswer = QUserProblemAnswer.userProblemAnswer;
+
+		UserProblemAttempt attempt = queryFactory
+			.selectFrom(qAttempt)
+			.where(qAttempt.userId.eq(userId), qAttempt.problemId.eq(problemId))
+			.orderBy(qAttempt.attemptedAt.desc())
+			.limit(1)
+			.fetchOne();
+
+		if (attempt == null) {
+			return null;
+		}
+
+		List<Integer> userChoices = queryFactory
+			.select(qAnswer.choiceNumber)
+			.from(qAnswer)
+			.where(qAnswer.attemptId.eq(attempt.getId()), qAnswer.choiceNumber.isNotNull())
+			.fetch();
+
+		String userTextAnswer = queryFactory
+			.select(qAnswer.answerText)
+			.from(qAnswer)
+			.where(qAnswer.attemptId.eq(attempt.getId()), qAnswer.answerText.isNotNull())
+			.fetchFirst();
+
+		return new AttemptWithAnswersDto(
+			attempt.getId(),
+			attempt.getUserId(),
+			attempt.getProblemId(),
+			attempt.getAnswerType(),
+			userChoices,
+			userTextAnswer,
+			attempt.getAttemptedAt()
+		);
+	}
+
+	public Long saveAttempt(SaveAttemptCommand command) {
+		UserProblemAttempt attempt = new UserProblemAttempt(
+			command.getUserId(),
+			command.getProblemId(),
+			command.getChapterId(),
+			command.getAnswerType()
+		);
+		entityManager.persist(attempt);
+		entityManager.flush();
+		return attempt.getId();
 	}
 
 	public void saveUserAnswer(SaveAnswerCommand command) {
-		// TODO: T_USER_PROBLEM_ANSWER 저장
+		if (command.getUserChoices() != null && !command.getUserChoices().isEmpty()) {
+			for (Integer choice : command.getUserChoices()) {
+				entityManager.persist(new UserProblemAnswer(command.getAttemptId(), choice, null));
+			}
+		} else if (command.getUserTextAnswer() != null) {
+			entityManager.persist(new UserProblemAnswer(command.getAttemptId(), null, command.getUserTextAnswer()));
+		}
 	}
 }

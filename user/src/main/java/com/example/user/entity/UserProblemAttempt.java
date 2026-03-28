@@ -22,6 +22,13 @@ import com.example.constants.AnswerType;
 @Entity
 @Table(name = "T_USER_PROBLEM_ATTEMPT")
 public class UserProblemAttempt {
+
+	public UserProblemAttempt(Long userId, Long problemId, Long chapterId, AnswerType answerType) {
+		this.userId = userId;
+		this.problemId = problemId;
+		this.chapterId = chapterId;
+		this.answerType = answerType;
+	}
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;

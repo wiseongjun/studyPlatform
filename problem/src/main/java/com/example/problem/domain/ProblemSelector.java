@@ -1,13 +1,53 @@
 package com.example.problem.domain;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Random;
+import java.util.Set;
 
+import org.springframework.stereotype.Component;
+
+import lombok.RequiredArgsConstructor;
+
+import com.example.exception.CustomException;
+import com.example.exception.ErrorCode;
+
+@Component
+@RequiredArgsConstructor
 public class ProblemSelector {
 
-	private ProblemSelector() { }
+	private final Random random; // 기능이 여러가지 생길 경우 전략패턴 고려
 
-	public static Long selectProblemId(List<Long> problemIds, List<Long> excludedIds) {
-		// TODO: excludedIds 제외 후 랜덤 선택, 모두 소진 시 예외 처리 구현
-		return null;
+	public Long selectProblemId(List<Long> problemIds, List<Long> excludedIds) {
+		if (problemIds == null || problemIds.isEmpty()) {
+			throw new CustomException(ErrorCode.NO_PROBLEM_AVAILABLE);
+		}
+
+		if (excludedIds == null || excludedIds.isEmpty()) {
+			return pickRandom(problemIds);
+		}
+
+		List<Long> candidates = filterCandidates(problemIds, excludedIds);
+
+		if (candidates.isEmpty()) {
+			throw new CustomException(ErrorCode.NO_PROBLEM_AVAILABLE);
+		}
+
+		return pickRandom(candidates);
+	}
+
+	private List<Long> filterCandidates(List<Long> problemIds, List<Long> excludedIds) {
+		Set<Long> excludedSet = (excludedIds instanceof Set)
+			? (Set<Long>)excludedIds
+			: new HashSet<>(excludedIds);
+
+		return problemIds.stream()
+			.filter(id -> !excludedSet.contains(id))
+			.toList();
+	}
+
+	private Long pickRandom(List<Long> ids) {
+		int size = ids.size();
+		return ids.get(random.nextInt(size));
 	}
 }

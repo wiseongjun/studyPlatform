@@ -12,8 +12,6 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import com.example.constants.AnswerType;
-
 @Getter
 @NoArgsConstructor
 @Entity
@@ -33,11 +31,4 @@ public class ProblemStatus {
 
 	@Column(name = "correct_attempts", nullable = false)
 	private int correctAttempts;
-
-	public void updateAfterSubmit(AnswerType answerType) {
-		this.totalAttempts++;
-		if (answerType == AnswerType.CORRECT) {
-			this.correctAttempts++;
-		}
-	}
 }

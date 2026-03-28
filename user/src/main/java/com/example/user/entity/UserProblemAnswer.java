@@ -14,6 +14,12 @@ import lombok.NoArgsConstructor;
 @Entity
 @Table(name = "T_USER_PROBLEM_ANSWER")
 public class UserProblemAnswer {
+
+	public UserProblemAnswer(Long attemptId, Integer choiceNumber, String answerText) {
+		this.attemptId = attemptId;
+		this.choiceNumber = choiceNumber;
+		this.answerText = answerText;
+	}
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
