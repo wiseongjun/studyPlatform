@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import com.example.chapter.dto.internal.ChapterListCondition;
-import com.example.type.ChapterCategory;
+import com.example.constants.ChapterCategory;
 
 @Getter
 @NoArgsConstructor

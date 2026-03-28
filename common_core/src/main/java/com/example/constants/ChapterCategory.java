@@ -1,4 +1,4 @@
-package com.example.type;
+package com.example.constants;
 
 import com.example.exception.CustomException;
 import com.example.exception.ErrorCode;
@@ -17,10 +17,6 @@ public enum ChapterCategory {
 		this.label = label;
 	}
 
-	public String getLabel() {
-		return label;
-	}
-
 	public static ChapterCategory from(String label) {
 		for (ChapterCategory category : values()) {
 			if (category.label.equals(label)) {
@@ -28,5 +24,9 @@ public enum ChapterCategory {
 			}
 		}
 		throw new CustomException(ErrorCode.INVALID_INPUT);
+	}
+
+	public String getLabel() {
+		return label;
 	}
 }

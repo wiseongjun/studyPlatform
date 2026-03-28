@@ -3,7 +3,7 @@ package com.example.chapter.repository.support;
 import com.querydsl.core.types.dsl.BooleanExpression;
 
 import com.example.chapter.entity.QChapter;
-import com.example.type.ChapterCategory;
+import com.example.constants.ChapterCategory;
 
 public final class ChapterQuerySupport {
 
