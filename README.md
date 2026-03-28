@@ -2,7 +2,7 @@
 
 ## 프로젝트 개요
 
-Spring Cloud 기반 **학습/퀴즈 플랫폼** 백엔드입니다.
+Spring Cloud 기반 **학습 플랫폼** 백엔드입니다.
 
 ### 구현 범위
 
@@ -28,12 +28,11 @@ Spring Cloud 기반 **학습/퀴즈 플랫폼** 백엔드입니다.
 
 ### 설계 시 주로 고려한 사항
 
-- **DDD (Aggregate Root)**: `Problem` 엔티티가 `choices`, `answers`, `status`를 소유하며 채점 로직(`grade()`)을 직접 수행. 문제 유형(`ProblemType`)은 엔티티가 관리하며, 클라이언트 요청이 아닌 서버가 판단. Service는 오케스트레이션만 담당
+- **DDD**: `Problem` 엔티티가 `choices`, `answers`, `status`를 소유하며 채점 로직(`grade()`)을 직접 수행. Service는 오케스트레이션만 담당.
 - **멀티 모듈 + 경계**: 도메인별 Gradle 모듈, 서비스 간 호출은 `common_api` Feign + `/internal/v1/**` REST
-- **CQRS**: 각 모듈의 Repository를 읽기(`ProblemRepository`, `UserRepository`)와 쓰기(`ProblemCommandRepository`, `UserCommandRepository`)로 분리
 - **DTO 계층**: `req` / `res` 분리, QueryDSL 조건은 `repository/support/*QuerySupport`로 재사용(Chapter·Problem·User)
 - **트랜잭션·비동기**: DB 쓰기는 `ProblemWriteService` 등 `@Transactional` 격리, Feign·`@Async`는 트랜잭션 밖(`ProblemAsyncService`)
-- **동시성**: `ProblemStatus` 갱신은 dirty checking 대신 단일 `UPDATE` 쿼리
+- **동시성**: `ProblemStatus` 갱신은 dirty checking 대신 단일 `UPDATE` 쿼리 - 동시성 정합성은 미흡 -> 주석으로 보완할부분 작성
 - **테스트**: 도메인·서비스·MOCK 테스트 + `problem`·`user` 일부 `@SpringBootTest` 통합 테스트(H2·Feign MOCK)
 
 ---
@@ -94,11 +93,19 @@ studyPlatform/
 
 ## 시퀀스 다이어그램 (Mermaid)
 
+GitHub·GitLab·일부 Markdown 뷰어에서 `mermaid` 코드 블록이 그대로 렌더링됩니다. (이전 정적 이미지: [`docs/sequence.png`](docs/sequence.png))
+
 ### 1) 랜덤 문제 조회 (`GET /api/v1/problem/random`)
 
-![sequence.png](docs/sequence.png)
+![sequence1.png](docs/sequence1.png)
 
+### 2) 문제 제출 (`POST /api/v1/problem/{problemId}/submit`)
 
+![sequence2.png](docs/sequence2.png)
+
+### 3) 사용자가 푼 문제 상세 (`GET /api/v1/user/{userId}/problem/solved/{problemId}`)
+
+![sequence3.png](docs/sequence3.png)
 ---
 
 ## API 명세
@@ -110,7 +117,7 @@ studyPlatform/
 | Method | Endpoint                             | 설명                        |
 |--------|--------------------------------------|---------------------------|
 | GET    | `/api/v1/problem/random`             | 단원별 랜덤 1문제 (미풀이·직전 스킵 제외) |
-| POST   | `/api/v1/problem/{problemId}/submit` | 답안 제출·채점 (문제 유형은 서버가 판단) |
+| POST   | `/api/v1/problem/{problemId}/submit` | 답안 제출·채점 (문제 유형은 서버가 판단)  |
 | GET    | `/api/v1/problem/list`               | 챕터별 문제 목록                 |
 
 ### user-service (외부, Gateway `/api/v1/user`)
@@ -126,13 +133,6 @@ studyPlatform/
 |--------|-----------|--------------------|
 | GET    | (단원 목록 등) | 필터·검색 — Swagger 참고 |
 
-### internal (Feign 전용, Swagger `@Hidden` 권장)
-
-| 대상              | 경로 예시                      | 설명              |
-|-----------------|----------------------------|-----------------|
-| user-service    | `/internal/v1/user/...`    | 풀이 ID 목록, 시도 저장 |
-| problem-service | `/internal/v1/problem/...` | 문제 요약/상세 조회     |
-
 ---
 
 ## 실행 방법
@@ -142,6 +142,8 @@ studyPlatform/
 cd docker && docker-compose -f docker-compose-db.yml up -d
 
 # (선택) 전체 WAS — docker-compose-was.yml 및 docker/yml/application-*.yml 참고
+.env 필요시 수정
+docker-compose -f docker-compose-was.yml up -d
 
 # 로컬 멀티 프로세스 (포트: Eureka 8761, Gateway 8080, user 8081, problem 8082, chapter 8083)
 ./gradlew :eureka:bootRun
@@ -152,7 +154,7 @@ cd docker && docker-compose -f docker-compose-db.yml up -d
 ```
 
 - DB 최초 스키마: **`flyway`** 모듈 1회 실행 또는 운영 정책에 맞는 마이그레이션 파이프라인 사용
-- 환경 변수·연결 정보: `docker/yml/application-web.yml` 등 참고 (`CLAUDE.md` Docker 절)
+- 환경 변수·연결 정보: `docker/yml/application-web.yml` 등 참고
 
 ```bash
 # 빌드·테스트
