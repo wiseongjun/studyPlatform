@@ -22,6 +22,7 @@ public enum ErrorCode {
 
 	// User
 	USER_NOT_FOUND(301, "존재하지 않는 사용자입니다.", 404),
+	LOGIN_FAILED(302, "아이디 또는 비밀번호가 올바르지 않습니다.", 401),
 
 	// Chapter
 	CHAPTER_NOT_FOUND(401, "존재하지 않는 단원입니다.", 404);

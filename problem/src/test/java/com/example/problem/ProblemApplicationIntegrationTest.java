@@ -9,6 +9,8 @@ import static org.mockito.Mockito.verify;
 
 import java.util.List;
 
+import java.util.Base64;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -36,6 +38,10 @@ import com.example.problem.dto.res.SubmitProblemResponse;
 @ActiveProfiles("integrationtest")
 class ProblemApplicationIntegrationTest {
 
+	private static final String PASSPORT_HEADER = "X-User-Passport";
+	private static final String TEST_PASSPORT =
+		Base64.getEncoder().encodeToString("{\"userId\":1,\"loginId\":\"test_user\",\"role\":\"ROLE_USER\"}".getBytes());
+
 	@Autowired
 	private TestRestTemplate restTemplate;
 
@@ -50,11 +56,19 @@ class ProblemApplicationIntegrationTest {
 		given(userFeignClient.getUserSolvedProblemIdList(anyLong(), anyLong())).willReturn(List.of());
 	}
 
+	private HttpHeaders authHeaders() {
+		HttpHeaders headers = new HttpHeaders();
+		headers.set(PASSPORT_HEADER, TEST_PASSPORT);
+		return headers;
+	}
+
 	@Test
 	@DisplayName("GET /api/v1/problem/random — DB·서비스·컨트롤러까지 통합, 삭제 제외 문제만 후보")
 	void getRandomProblem_returnsNonDeletedProblemFromChapter() {
-		ResponseEntity<ProblemResponse> res = restTemplate.getForEntity(
+		ResponseEntity<ProblemResponse> res = restTemplate.exchange(
 			"/api/v1/problem/random?userId=1&chapterId=1",
+			org.springframework.http.HttpMethod.GET,
+			new HttpEntity<>(authHeaders()),
 			ProblemResponse.class
 		);
 
@@ -67,8 +81,10 @@ class ProblemApplicationIntegrationTest {
 	@Test
 	@DisplayName("GET /api/v1/problem/list — 챕터별 목록 조회")
 	void getProblemListByChapter_returnsProblemsForChapter() {
-		ResponseEntity<ProblemResponse[]> res = restTemplate.getForEntity(
+		ResponseEntity<ProblemResponse[]> res = restTemplate.exchange(
 			"/api/v1/problem/list?chapterId=1",
+			org.springframework.http.HttpMethod.GET,
+			new HttpEntity<>(authHeaders()),
 			ProblemResponse[].class
 		);
 
@@ -84,7 +100,7 @@ class ProblemApplicationIntegrationTest {
 	@DisplayName("POST /api/v1/problem/{id}/submit — 정답 시 CORRECT 및 비동기 saveAttempt 호출")
 	void submitProblem_correctAnswer_updatesAndCallsUserService() throws Exception {
 		SubmitProblemRequest body = new SubmitProblemRequest(1L, List.of(1), null);
-		HttpHeaders headers = new HttpHeaders();
+		HttpHeaders headers = authHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String json = objectMapper.writeValueAsString(body);
 		HttpEntity<String> entity = new HttpEntity<>(json, headers);
@@ -111,7 +127,7 @@ class ProblemApplicationIntegrationTest {
 	@DisplayName("POST /api/v1/problem/{id}/submit — 오답 시 INCORRECT")
 	void submitProblem_wrongAnswer_returnsIncorrect() throws Exception {
 		SubmitProblemRequest body = new SubmitProblemRequest(1L, List.of(3), null);
-		HttpHeaders headers = new HttpHeaders();
+		HttpHeaders headers = authHeaders();
 		headers.setContentType(MediaType.APPLICATION_JSON);
 		String json = objectMapper.writeValueAsString(body);
 		HttpEntity<String> entity = new HttpEntity<>(json, headers);

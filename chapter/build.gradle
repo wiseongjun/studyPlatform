@@ -6,4 +6,5 @@ plugins {
 dependencies {
     implementation project(':common_web')
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
+    testImplementation 'org.springframework.security:spring-security-test'
 }
