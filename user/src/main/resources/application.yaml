@@ -13,3 +13,6 @@ eureka:
   client:
     service-url:
       defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
+jwt:
+  secret: ${JWT_SECRET:study-platform-jwt-secret-key-must-be-256bit-or-more!!}
+  expiration-ms: 86400000

@@ -14,11 +14,13 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.example.config.GlobalExceptionHandler;
+import com.example.config.PassportAuthenticationFilter;
+import com.example.config.SecurityConfig;
 import com.example.exception.ErrorCode;
 import com.example.user.service.UserService;
 
 @WebMvcTest(controllers = InternalUserController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, PassportAuthenticationFilter.class})
 class InternalUserControllerTest {
 
 	@Autowired

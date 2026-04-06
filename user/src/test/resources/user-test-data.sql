@@ -1,4 +1,4 @@
-INSERT INTO T_USER (id, name) VALUES (1, 'testUser');
+INSERT INTO T_USER (id, name, login_id, password, role) VALUES (1, 'testUser', 'test_user', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'ROLE_USER');
 
 INSERT INTO T_USER_PROBLEM_ATTEMPT (id, user_id, problem_id, chapter_id, answer_status, attempted_at)
 VALUES (1, 1, 10, 1, 'CORRECT',   '2026-01-01 10:00:00'),

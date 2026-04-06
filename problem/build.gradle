@@ -8,4 +8,5 @@ dependencies {
     implementation project(':common_api')
     implementation 'org.springframework.cloud:spring-cloud-starter-netflix-eureka-client'
     testRuntimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.security:spring-security-test'
 }

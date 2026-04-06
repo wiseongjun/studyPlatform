@@ -10,10 +10,12 @@ spring:
         add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOriginPatterns:
+              - "http://localhost:3000"
+              - "https://localhost:3000"
             allowedMethods: "*"
             allowedHeaders: "*"
-            allowCredentials: false
+            allowCredentials: true
       server:
         webflux:
           # 서비스 디스커버리 기반 자동 라우팅 설정
@@ -25,6 +27,11 @@ spring:
           # 개별 라우팅 설정
           routes:
             # 1. API 서비스 라우트
+            - id: auth-service
+              uri: lb://user-service
+              predicates:
+                - Path=/api/v1/auth/**
+
             - id: problem-service
               uri: lb://problem-service
               predicates:
@@ -72,6 +79,9 @@ spring:
                 - Path=/api-docs/chapter
               filters:
                 - RewritePath=/api-docs/chapter, /api-docs
+jwt:
+  secret: ${JWT_SECRET:study-platform-jwt-secret-key-must-be-256bit-or-more!!}
+  expiration-ms: 86400000
 server:
   port: 8080
 

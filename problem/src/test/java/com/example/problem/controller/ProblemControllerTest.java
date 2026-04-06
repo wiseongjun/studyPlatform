@@ -13,12 +13,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.example.config.GlobalExceptionHandler;
+import com.example.config.PassportAuthenticationFilter;
+import com.example.config.SecurityConfig;
 import com.example.constants.AnswerType;
 import com.example.constants.ProblemType;
 import com.example.exception.CustomException;
@@ -29,7 +32,8 @@ import com.example.problem.dto.res.SubmitProblemResponse;
 import com.example.problem.service.ProblemService;
 
 @WebMvcTest(controllers = ProblemController.class)
-@Import(GlobalExceptionHandler.class)
+@Import({GlobalExceptionHandler.class, SecurityConfig.class, PassportAuthenticationFilter.class})
+@WithMockUser
 class ProblemControllerTest {
 
 	@Autowired
