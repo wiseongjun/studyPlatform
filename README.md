@@ -1,172 +1,326 @@
-# studyPlatform
+# K8s 학습 프로젝트
+
+# 로컬 Docker Compose → AWS EKS + CI/CD
 
 ## 프로젝트 개요
 
-Spring Cloud 기반 **학습 플랫폼** 백엔드입니다.
-
-### 구현 범위
-
-**단원 (chapter-service)**
-
-- 단원 목록 조회
-
-**문제 (problem-service)**
-
-- **랜덤 문제 1건 조회 / 문제 건너뛰기**
-- **문제 제출**
-- **챕터별 문제 목록**
-
-**사용자·풀이 이력 (user-service)**
-
-- **풀이한 문제 목록**
-- **풀이 상세**
-
-**공통**
-
-- `common_core`(예외·Enum), `common_web`(JPA·Redis·Swagger·QueryDSL), `common_api`(Feign DTO/클라이언트)
-- `flyway`로 스키마 마이그레이션, `docker/` Compose로 DB·WAS 일괄 기동
-
-### 설계 시 주로 고려한 사항
-
-- **DDD**: `Problem` 엔티티가 `choices`, `answers`, `status`를 소유하며 채점 로직(`grade()`)을 직접 수행. Service는 오케스트레이션만 담당.
-- **멀티 모듈 + 경계**: 도메인별 Gradle 모듈, 서비스 간 호출은 `common_api` Feign + `/internal/v1/**` REST
-- **DTO 계층**: `req` / `res` 분리, QueryDSL 조건은 `repository/support/*QuerySupport`로 재사용(Chapter·Problem·User)
-- **트랜잭션·비동기**: DB 쓰기는 `ProblemWriteService` 등 `@Transactional` 격리, Feign·`@Async`는 트랜잭션 밖(`ProblemAsyncService`)
-- **동시성**: `ProblemStatus` 갱신은 dirty checking 대신 단일 `UPDATE` 쿼리 - 동시성 정합성은 미흡 -> 주석으로 보완할부분 작성
-- **테스트**: 도메인·서비스·MOCK 테스트 + `problem`·`user` 일부 `@SpringBootTest` 통합 테스트(H2·Feign MOCK)
+| 항목 | 내용 |
+| --- | --- |
+| 참여 인원 | 백엔드 엔지니어 1명, 클라우드 엔지니어 1명 |
+| 시작 상태 | 백엔드 서버 개발 완료, Docker Compose 로컬 구동 완료 |
+| 최종 목표 | AWS EKS 배포 + CI/CD 파이프라인 + 오토스케일링 운영 환경 구축 |
+| 예상 기간 | 5~7주 |
 
 ---
 
-## 기술 스택
+## 기술 스택 요약
 
-| 분류          | 기술                                                                   | 버전                           |
-|-------------|----------------------------------------------------------------------|------------------------------|
-| Language    | Java                                                                 | 21                           |
-| Framework   | Spring Boot                                                          | 3.5.3                        |
-| Cloud       | Spring Cloud (BOM)                                                   | 2025.0.0                     |
-| API Gateway | Spring Cloud Gateway (WebFlux)                                       | (BOM)                        |
-| Discovery   | Netflix Eureka Client                                                | (BOM)                        |
-| RPC         | OpenFeign                                                            | (BOM)                        |
-| ORM         | Spring Data JPA + QueryDSL                                           | QueryDSL 5.1.0               |
-| DB          | MySQL (로컬/Docker), H2(테스트)                                           | 8.0                          |
-| Cache       | Spring Cache + Redis                                                 | —                            |
-| Docs        | SpringDoc OpenAPI                                                    | 2.8.16                       |
-| Migration   | Flyway                                                               | (Boot 관리)                    |
-| Style       | Naver Checkstyle                                                     | `naver-checkstyle-rules.xml` |
-| Test        | JUnit 5, Mockito, `@DataJpaTest` / `@WebMvcTest` / `@SpringBootTest` | —                            |
+- **컨테이너**: Docker, Kubernetes (Minikube/kind → EKS)
+- **패키징**: Helm
+- **클라우드**: AWS (EKS, ECR, ALB, RDS, VPC, IAM)
+- **IaC**: Terraform (또는 eksctl)
+- **CI/CD**: GitHub Actions + ArgoCD
+- **모니터링**: Prometheus + Grafana
+- **부하테스트**: k6 또는 wrk
 
 ---
 
-## 아키텍처
+## Phase 1: 로컬 K8s 전환 (1~2주)
+
+> **목표**: Docker Compose로 구동 중인 서비스를 로컬 K8s 클러스터에서 동일하게 구동한다.
+> 
+
+### 백엔드 엔지니어
+
+- [ ]  Dockerfile 최적화
+    - 멀티스테이지 빌드 적용
+    - 불필요한 레이어 제거, 이미지 사이즈 축소
+    - `.dockerignore` 정리
+- [ ]  K8s manifest 작성
+    - Deployment (replicas, resource limits/requests)
+    - Service (ClusterIP)
+    - ConfigMap (환경변수 분리)
+    - Secret (DB 비밀번호 등 민감정보 분리)
+- [ ]  health check 엔드포인트 구현
+    - `GET /healthz` → liveness probe용
+    - `GET /readyz` → readiness probe용
+- [ ]  Deployment에 probe 설정 추가
+    
+    ```yaml
+    livenessProbe:  httpGet:    path: /healthz    port: 8080  initialDelaySeconds: 10  periodSeconds: 5readinessProbe:  httpGet:    path: /readyz    port: 8080  initialDelaySeconds: 5  periodSeconds: 3
+    ```
+    
+
+### 클라우드 엔지니어
+
+- [ ]  로컬 K8s 클러스터 세팅 (Minikube 또는 kind)
+- [ ]  Namespace 설계 및 생성 (예: `dev`, `staging`)
+- [ ]  Ingress Controller 설치 (NGINX Ingress Controller)
+- [ ]  Ingress 리소스 작성 및 라우팅 설정
+- [ ]  DB를 K8s 내에서 구동
+    - StatefulSet + PVC 구성
+    - 또는 로컬 외부 DB 유지 후 ExternalName Service 연결
+
+### 완료 기준
+
+- [ ]  `kubectl apply -f` 로 전체 서비스가 정상 기동
+- [ ]  Ingress를 통해 외부에서 API 호출 가능
+- [ ]  `kubectl get pods` 에서 모든 Pod가 Running + Ready 상태
+- [ ]  Pod 삭제 시 자동 재생성 확인
+
+---
+
+## Phase 2: Helm Chart 패키징 (1주)
+
+> **목표**: Phase 1의 manifest를 Helm Chart로 패키징하여 환경별 배포가 가능하도록 한다.
+> 
+
+### 백엔드 엔지니어
+
+- [ ]  `values.yaml` 설계
+    - 파라미터화 대상: 이미지 태그, 레플리카 수, 리소스 제한, 환경변수
+    - 예시:
+        
+        ```yaml
+        image:  repository: my-backend  tag: latestreplicas: 2resources:  requests:    cpu: 100m    memory: 128Mi  limits:    cpu: 500m    memory: 512Mienv:  DB_HOST: localhost  DB_PORT: "5432"
+        ```
+        
+- [ ]  환경별 values 파일 분리
+    - `values-dev.yaml`
+    - `values-staging.yaml`
+    - `values-prod.yaml`
+
+### 클라우드 엔지니어
+
+- [ ]  Helm Chart 디렉토리 구조 생성
+    
+    ```
+    chart/├── Chart.yaml├── values.yaml├── values-dev.yaml├── values-staging.yaml├── values-prod.yaml└── templates/    ├── deployment.yaml    ├── service.yaml    ├── configmap.yaml    ├── secret.yaml    ├── ingress.yaml    └── _helpers.tpl
+    ```
+    
+- [ ]  `_helpers.tpl` 에 공통 라벨, 이름 규칙 정의
+- [ ]  Helm 명령어 워크플로우 검증
+    - `helm install` → 신규 배포
+    - `helm upgrade` → 변경 배포
+    - `helm rollback` → 롤백
+    - `helm template` → manifest 렌더링 확인 (dry-run)
+
+### 완료 기준
+
+- [ ]  `helm install my-app ./chart -f values-dev.yaml` 로 한 번에 배포 가능
+- [ ]  values 파일만 교체하여 환경 전환 확인
+- [ ]  `helm upgrade` 후 변경사항 반영 확인
+- [ ]  `helm rollback` 으로 이전 버전 복원 확인
+
+---
+
+## Phase 3: AWS 인프라 + EKS 구축 (2주)
+
+> **목표**: AWS에 EKS 클러스터를 구축하고, 백엔드 서비스를 실제 클라우드에 배포한다.
+> 
+
+### 백엔드 엔지니어
+
+- [ ]  ECR 레포지토리 생성 및 이미지 push
+    
+    ```bash
+    aws ecr get-login-password --region ap-northeast-2 | docker login --username AWS --password-stdin <account-id>.dkr.ecr.ap-northeast-2.amazonaws.comdocker tag my-backend:latest <account-id>.dkr.ecr.ap-northeast-2.amazonaws.com/my-backend:v1.0.0docker push <account-id>.dkr.ecr.ap-northeast-2.amazonaws.com/my-backend:v1.0.0
+    ```
+    
+- [ ]  AWS 환경용 `values-prod.yaml` 작성
+    - ECR 이미지 경로로 변경
+    - RDS 엔드포인트 반영
+    - 리소스 제한 조정
+- [ ]  RDS 연동을 위한 앱 설정 변경
+    - DB 커넥션 풀 설정
+    - 타임아웃, 재시도 로직 점검
+
+### 클라우드 엔지니어
+
+- [ ]  Terraform으로 AWS 인프라 프로비저닝
+    - VPC (Public/Private Subnet, NAT Gateway)
+    - EKS 클러스터 + Node Group
+    - RDS (Private Subnet 배치)
+    - Security Group 설계
+        - ALB → Node: 앱 포트 허용
+        - Node → RDS: DB 포트 허용
+- [ ]  IAM 설정
+    - EKS 클러스터 역할
+    - Node Group 역할
+    - IRSA (ServiceAccount ↔ IAM Role) 설정
+- [ ]  AWS Load Balancer Controller 설치
+- [ ]  Ingress 리소스에 ALB 어노테이션 추가
+    
+    ```yaml
+    annotations:  kubernetes.io/ingress.class: alb  alb.ingress.kubernetes.io/scheme: internet-facing  alb.ingress.kubernetes.io/target-type: ip
+    ```
+    
+- [ ]  kubeconfig 설정 및 팀원과 클러스터 접근 공유
+
+### 완료 기준
+
+- [ ]  EKS 클러스터에 Helm으로 서비스 배포 완료
+- [ ]  ALB DNS로 외부 API 호출 정상 동작
+- [ ]  앱 → RDS 연동 정상 동작 (CRUD 확인)
+- [ ]  `kubectl logs` 로 앱 로그 정상 확인
+
+---
+
+## Phase 4: CI/CD 파이프라인 (1~2주)
+
+> **목표**: 코드 push만으로 빌드 → 이미지 push → EKS 자동 배포까지 완성한다.
+> 
+
+### 백엔드 엔지니어
+
+- [ ]  GitHub Actions CI 워크플로우 작성
+    
+    ```yaml
+    # .github/workflows/ci.yamlname: CIon:  push:    branches: [main, develop]  pull_request:    branches: [main]jobs:  test:    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v4      - name: Run tests        run: |          # 유닛 테스트 + 통합 테스트  build-and-push:    needs: test    runs-on: ubuntu-latest    steps:      - uses: actions/checkout@v4      - uses: aws-actions/configure-aws-credentials@v4      - uses: aws-actions/amazon-ecr-login@v2      - name: Build and push        run: |          docker build -t $ECR_REPO:${{ github.sha }} .          docker push $ECR_REPO:${{ github.sha }}      - name: Update Helm values        run: |          # values 파일의 image tag를 commit SHA로 업데이트          # GitOps 레포에 커밋
+    ```
+    
+- [ ]  브랜치 전략 정의
+    - `feature/*` → develop (PR 머지)
+    - `develop` → staging 자동 배포
+    - `main` → prod 자동 배포
+- [ ]  테스트 자동화 (CI에서 실행될 테스트 코드 정비)
+
+### 클라우드 엔지니어
+
+- [ ]  ArgoCD 설치 (EKS 클러스터 내)
+    
+    ```bash
+    kubectl create namespace argocdkubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+    ```
+    
+- [ ]  ArgoCD Application 리소스 생성
+    - Git 레포 (Helm Chart) 연동
+    - 자동 sync 정책 설정
+    
+    ```yaml
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: my-backend
+      namespace: argocd
+    spec:
+      source:
+        repoURL: https://github.com/<org>/<gitops-repo>.git
+        path: chart
+        helm:
+          valueFiles:
+            - values-prod.yaml
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: production
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    ```
+    
+- [ ]  배포 전략 설정
+    - Rolling Update (기본): maxSurge, maxUnavailable 설정
+    - 또는 Blue/Green 전략 적용
+- [ ]  ArgoCD 대시보드 접근 설정 (포트포워딩 또는 Ingress)
+
+### 완료 기준
+
+- [ ]  develop 브랜치에 push → staging 자동 배포
+- [ ]  main 브랜치에 push → prod 자동 배포
+- [ ]  ArgoCD 대시보드에서 sync 상태 확인 가능
+- [ ]  잘못된 배포 시 `helm rollback` 또는 ArgoCD에서 롤백 가능
+
+---
+
+## Phase 5: 운영 안정화 (1주)
+
+> **목표**: 모니터링, 오토스케일링, 장애 대응을 구축하여 운영 수준으로 끌어올린다.
+> 
+
+### 백엔드 엔지니어
+
+- [ ]  HPA 설정
+    
+    ```yaml
+    apiVersion: autoscaling/v2kind: HorizontalPodAutoscalermetadata:  name: my-backend-hpaspec:  scaleTargetRef:    apiVersion: apps/v1    kind: Deployment    name: my-backend  minReplicas: 2  maxReplicas: 10  metrics:    - type: Resource      resource:        name: cpu        target:          type: Utilization          averageUtilization: 70
+    ```
+    
+- [ ]  부하 테스트 수행 (k6 또는 wrk)
+    - HPA에 의해 Pod가 스케일아웃되는지 확인
+    - 트래픽 줄이면 스케일인되는지 확인
+- [ ]  Prometheus 메트릭 노출 (앱에 `/metrics` 엔드포인트 추가)
+
+### 클라우드 엔지니어
+
+- [ ]  Prometheus + Grafana 설치 (Helm chart: kube-prometheus-stack)
+    
+    ```bash
+    helm repo add prometheus-community https://prometheus-community.github.io/helm-chartshelm install monitoring prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
+    ```
+    
+- [ ]  Grafana 대시보드 구성
+    - K8s 클러스터 리소스 대시보드
+    - 앱 메트릭 대시보드
+- [ ]  Karpenter 설정 (노드 오토스케일링)
+    - Pod가 Pending 상태 시 자동 노드 추가
+    - 트래픽 감소 시 노드 자동 축소
+- [ ]  장애 시나리오 테스트
+    - Pod 강제 삭제 → 자동 재생성 확인
+    - 노드 drain → Pod 재배치 확인
+    - 잘못된 이미지 배포 → 롤백 수행
+
+### 완료 기준
+
+- [ ]  부하 테스트 시 Pod 오토스케일링 정상 동작
+- [ ]  Grafana에서 CPU, 메모리, 요청 수 실시간 모니터링 가능
+- [ ]  장애 시나리오 3개 이상 테스트 및 복구 확인
+
+---
+
+## 트래픽 흐름 아키텍처
 
 ```
-studyPlatform/
-├── buildSrc/                 # Gradle 플러그인 (spring-cloud-app, querydsl 등)
-├── common_core/              # 예외, ErrorCode, 공통 Enum·상수
-├── common_web/               # JPA, Redis, Swagger, QueryDSL 공통 설정
-├── common_api/               # Feign 인터페이스·공유 DTO
-├── eureka/                   # 서비스 디스커버리 (:8761)
-├── gateway/                  # API Gateway + Swagger 집계 (:8080)
-├── chapter/                  # 단원 API (:8083)
-├── problem/                  # 문제·랜덤·제출·내부 problem API (:8082)
-│   ├── entity/               # Problem(Aggregate Root), ProblemChoice, ProblemAnswer, ProblemStatus
-│   ├── repository/           # ProblemRepository(읽기), ProblemCommandRepository(쓰기), support/
-│   ├── service/              # ProblemService(Application Service), ProblemWriteService, ProblemApiMapper
-│   ├── utils/                # ProblemHelper, ProblemSelector
-│   └── config/               # Async, Random·Selector 빈
-├── user/                     # 풀이 이력·내부 user API (:8081)
-│   ├── repository/           # UserRepository(읽기), UserCommandRepository(쓰기), support/
-│   └── service/
-└── flyway/                   # DB 마이그레이션 전용 모듈
+[Client]
+   │
+   ▼
+[AWS ALB] ── AWS가 자동 관리
+   │
+   ▼
+[K8s Ingress]
+   │
+   ▼
+[K8s Service] ── Pod 간 로드밸런싱 (라운드로빈)
+   │
+   ├──▶ [Pod 1]
+   ├──▶ [Pod 2]
+   └──▶ [Pod 3]  ← HPA가 트래픽에 따라 자동 증감
+          │
+          ▼
+       [AWS RDS]
 ```
 
-**런타임 흐름 (요약)**  
-`Client → Gateway(8080) → Eureka lb://{service} → MySQL + Redis`  
-서비스 간: `Feign` → `user-service` / `problem-service`의 `/internal/v1/...`
+## 스케일아웃 흐름
 
----
-
-## ERD
-
-![erd.png](docs/erd.png)
----
-
-## 시퀀스 다이어그램 (Mermaid)
-
-GitHub·GitLab·일부 Markdown 뷰어에서 `mermaid` 코드 블록이 그대로 렌더링됩니다. (이전 정적 이미지: [`docs/sequence.png`](docs/sequence.png))
-
-### 1) 랜덤 문제 조회 (`GET /api/v1/problem/random`)
-
-![sequence1.png](docs/sequence1.png)
-
-### 2) 문제 제출 (`POST /api/v1/problem/{problemId}/submit`)
-
-![sequence2.png](docs/sequence2.png)
-
-### 3) 사용자가 푼 문제 상세 (`GET /api/v1/user/{userId}/problem/solved/{problemId}`)
-
-![sequence3.png](docs/sequence3.png)
----
-
-## API 명세
-
-> 상세 스펙은 **Gateway `8080`** 기준 Swagger UI에서 서비스별 API 문서를 확인하면 됩니다 (`springdoc` 다중 URL 집계).
-
-### problem-service (외부, Gateway `/api/v1/problem`)
-
-| Method | Endpoint                             | 설명                        |
-|--------|--------------------------------------|---------------------------|
-| GET    | `/api/v1/problem/random`             | 단원별 랜덤 1문제 (미풀이·직전 스킵 제외) |
-| POST   | `/api/v1/problem/{problemId}/submit` | 답안 제출·채점 (문제 유형은 서버가 판단)  |
-| GET    | `/api/v1/problem/list`               | 챕터별 문제 목록                 |
-
-### user-service (외부, Gateway `/api/v1/user`)
-
-| Method | Endpoint                                           | 설명                        |
-|--------|----------------------------------------------------|---------------------------|
-| GET    | `/api/v1/user/{userId}/problem/solved/list`        | 풀이한 문제 목록                 |
-| GET    | `/api/v1/user/{userId}/problem/solved/{problemId}` | 풀이 상세 (문항은 problem Feign) |
-
-### chapter-service (외부, Gateway `/api/v1/chapter`)
-
-| Method | Endpoint  | 설명                 |
-|--------|-----------|--------------------|
-| GET    | (단원 목록 등) | 필터·검색 — Swagger 참고 |
-
----
-
-## 실행 방법
-
-```bash
-# DB + Redis (docker 디렉터리)
-cd docker && docker-compose -f docker-compose-db.yml up -d
-
-# (선택) 전체 WAS — docker-compose-was.yml 및 docker/yml/application-*.yml 참고
-.env 필요시 수정
-docker-compose -f docker-compose-was.yml up -d
-
-# 로컬 멀티 프로세스 (포트: Eureka 8761, Gateway 8080, user 8081, problem 8082, chapter 8083)
-./gradlew :eureka:bootRun
-./gradlew :gateway:bootRun
-./gradlew :user:bootRun
-./gradlew :problem:bootRun
-./gradlew :chapter:bootRun
 ```
+트래픽 증가
+   → HPA: Pod 수 증가 (Pod 레벨)
+   → Karpenter: EC2 노드 추가 (노드 레벨)
+   → ALB: 새 Pod 자동 등록 (로드밸런서 레벨)
 
-- DB 최초 스키마: **`flyway`** 모듈 1회 실행 또는 운영 정책에 맞는 마이그레이션 파이프라인 사용
-- 환경 변수·연결 정보: `docker/yml/application-web.yml` 등 참고
-
-```bash
-# 빌드·테스트
-./gradlew build
-./gradlew :problem:test :user:test
+트래픽 감소
+   → HPA: Pod 수 감소
+   → Karpenter: 빈 노드 회수
 ```
 
 ---
 
-## 웹 테스트용 URL
+## 참고 자료
 
-| 리소스             | URL (기본)                                |
-|-----------------|-----------------------------------------|
-| Swagger UI (집계) | `http://localhost:8080/swagger-ui.html` |
-| Eureka 대시보드     | `http://localhost:8761`                 |
+- [Kubernetes 공식 문서](https://kubernetes.io/ko/docs/home/)
+- [Helm 공식 문서](https://helm.sh/docs/)
+- [AWS EKS 공식 가이드](https://docs.aws.amazon.com/eks/latest/userguide/)
+- [ArgoCD 공식 문서](https://argo-cd.readthedocs.io/)
+- [Terraform EKS 모듈](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)
+- [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack)
+- [Karpenter 공식 문서](https://karpenter.sh/docs/)
