@@ -1,12 +1,3 @@
-spring:
-  application:
-    name: user-service
-  profiles:
-    include:
-      - common
-      - web
-server:
-  port: 8081
 eureka:
   instance:
     instance-id: ${spring.application.name}:${server.port}

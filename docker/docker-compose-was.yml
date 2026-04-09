@@ -5,9 +5,7 @@ services:
     restart: always
     volumes:
       - ./logs/eureka:/usr/src/app/log
-      - ./yml/application-eureka.yml:/usr/src/app/application.yml
-      - ./yml/application-common.yml:/usr/src/app/application-common.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar
     ports:
       - "${EUREKA_PORT}:8761"
     healthcheck:
@@ -23,9 +21,7 @@ services:
     restart: always
     volumes:
       - ./logs/gateway:/usr/src/app/log
-      - ./yml/application-gateway.yml:/usr/src/app/application.yml
-      - ./yml/application-common.yml:/usr/src/app/application-common.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar --spring.profiles.active=local
     environment:
       EUREKA_HOST: ${EUREKA_HOST}
       EUREKA_PORT: ${EUREKA_PORT}
@@ -40,8 +36,7 @@ services:
     container_name: study-flyway
     volumes:
       - ./logs/flyway:/usr/src/app/log
-      - ./yml/application-flyway.yml:/usr/src/app/application.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -59,10 +54,7 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - ./logs/problem:/usr/src/app/log
-      - ./yml/application-common.yml:/usr/src/app/application-common.yml
-      - ./yml/application-web.yml:/usr/src/app/application-web.yml
-      - ./yml/application-problem.yml:/usr/src/app/application.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar --spring.profiles.active=local
     environment:
       DB_HOST: ${DB_SERVER_IP}
       DB_PORT: ${DB_PORT}
@@ -86,10 +78,7 @@ services:
     restart: always
     volumes:
       - ./logs/user:/usr/src/app/log
-      - ./yml/application-common.yml:/usr/src/app/application-common.yml
-      - ./yml/application-web.yml:/usr/src/app/application-web.yml
-      - ./yml/application-user.yml:/usr/src/app/application.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar --spring.profiles.active=local
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:
@@ -115,10 +104,7 @@ services:
     restart: always
     volumes:
       - ./logs/chapter:/usr/src/app/log
-      - ./yml/application-common.yml:/usr/src/app/application-common.yml
-      - ./yml/application-web.yml:/usr/src/app/application-web.yml
-      - ./yml/application-chapter.yml:/usr/src/app/application.yml
-    command: java -jar app.jar --spring.config.location=./application.yml
+    command: java -jar app.jar --spring.profiles.active=local
     extra_hosts:
       - "host.docker.internal:host-gateway"
     environment:

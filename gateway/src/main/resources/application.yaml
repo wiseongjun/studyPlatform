@@ -14,74 +14,8 @@ spring:
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: false
-      server:
-        webflux:
-          # 서비스 디스커버리 기반 자동 라우팅 설정
-          discovery:
-            locator:
-              enabled: true
-              lower-case-service-id: true
-
-          # 개별 라우팅 설정
-          routes:
-            # 1. API 서비스 라우트
-            - id: problem-service
-              uri: lb://problem-service
-              predicates:
-                - Path=/api/v1/problem/**
-
-            - id: user-service
-              uri: lb://user-service
-              predicates:
-                - Path=/api/v1/user/**
-
-            - id: chapter-service
-              uri: lb://chapter-service
-              predicates:
-                - Path=/api/v1/chapter/**
-
-            # 2. 내부 서비스 간 통신 라우트 (Feign 전용)
-            - id: user-service-internal
-              uri: lb://user-service
-              predicates:
-                - Path=/internal/v1/user/**
-
-            - id: problem-service-internal
-              uri: lb://problem-service
-              predicates:
-                - Path=/internal/v1/problem/**
-
-            # 3. Swagger/OpenAPI 문서 라우트
-            - id: problem-api-docs
-              uri: lb://problem-service
-              predicates:
-                - Path=/api-docs/problem
-              filters:
-                - RewritePath=/api-docs/problem, /api-docs
-
-            - id: user-api-docs
-              uri: lb://user-service
-              predicates:
-                - Path=/api-docs/user
-              filters:
-                - RewritePath=/api-docs/user, /api-docs
-
-            - id: chapter-api-docs
-              uri: lb://chapter-service
-              predicates:
-                - Path=/api-docs/chapter
-              filters:
-                - RewritePath=/api-docs/chapter, /api-docs
 server:
   port: 8080
-
-eureka:
-  instance:
-    instance-id: ${spring.application.name}:${server.port}
-  client:
-    service-url:
-      defaultZone: http://${EUREKA_HOST:localhost}:${EUREKA_PORT:8761}/eureka/
-
 springdoc:
   swagger-ui:
     urls:
