@@ -61,10 +61,7 @@ echo ""
 echo "=== [3/7] NGINX Ingress Controller 설치 ==="
 kubectl apply -f "$SCRIPT_DIR/nginx-ingress/deploy.yaml"
 echo "Ingress Controller 준비 대기 중..."
-kubectl wait --namespace ingress-nginx \
-  --for=condition=ready pod \
-  --selector=app.kubernetes.io/component=controller \
-  --timeout=120s
+kubectl rollout status deployment -n ingress-nginx ingress-nginx-controller --timeout=120s
 
 # 4. Gradle 빌드
 echo ""
